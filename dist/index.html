@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="GCC cash-on-delivery profit simulator for COD Network and COD Partner." />
+    <title>Amine.loading GCC COD PROFIT SIMU</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1519'/%3E%3Cpath d='M16 19h32v27H16z' fill='%23b9ff47'/%3E%3Cpath d='M22 27h20M22 33h12M22 39h17' stroke='%230b1519' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./app.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">A</div>
+        <div><p class="eyebrow">Amine.loading</p><h1>GCC COD PROFIT SIMU</h1></div>
+      </div>
+      <div class="header-status">
+        <span class="local-pill"><i></i> Runs locally</span>
+        <button class="reset-button" id="resetButton" type="button">Reset simulator</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="setup-bar" aria-labelledby="setup-title">
+        <div class="setup-copy"><p class="section-kicker">Pricing setup</p><h2 id="setup-title">Choose your operation</h2></div>
+        <label class="select-card platform-card"><span>Platform</span><select id="platform" aria-label="Platform" autocomplete="off"><option value="codnetwork">COD Network</option><option value="codpartner">COD Partner</option></select></label>
+        <label class="select-card"><span>Country / market</span><select id="country" aria-label="Country or market" autocomplete="off"></select></label>
+        <label class="select-card"><span>Product type</span><select id="productType" aria-label="Product type" autocomplete="off"><option value="gadget">Gadget</option><option value="cosmetic">Cosmetic</option></select></label>
+        <label class="select-card"><span id="serviceModeLabel">Service setup</span><select id="serviceMode" aria-label="Service setup" autocomplete="off"></select></label>
+        <div class="source-note"><span id="sourceBadge">COD Network</span><p id="sourceNote">Domestic fees from the supplied COD Network dashboard.</p></div>
+      </section>
+
+      <section class="fee-ribbon" aria-label="Selected tariff">
+        <div><span>Lead</span><strong id="tariffLead">$0.50</strong></div>
+        <div><span>Confirmed</span><strong id="tariffConfirmed">$1.00</strong></div>
+        <div><span>Delivered service</span><strong id="tariffDelivered">$2.00</strong></div>
+        <div><span>Shipping delivered</span><strong id="tariffShipDelivered">$4.99</strong></div>
+        <div><span>Shipping returned</span><strong id="tariffShipReturned">$2.99</strong></div>
+        <div><span>COD fee</span><strong id="tariffCod">5%</strong></div>
+        <div><span>VAT</span><strong id="tariffVat">Included</strong></div>
+      </section>
+
+      <div class="top-grid">
+        <section class="control-panel panel" aria-labelledby="inputs-title">
+          <div class="section-heading"><div><p class="section-kicker">Live inputs</p><h2 id="inputs-title">Campaign numbers</h2></div><span class="live-badge"><i></i> Live</span></div>
+          <div class="lead-control">
+            <div class="lead-control-head"><label for="leads"><b>Total leads</b><small>Drag or enter any amount</small></label><span class="number-box"><input id="leads" type="number" min="1" step="1" value="100" inputmode="numeric" /><em>leads</em></span></div>
+            <input class="range lead-range" id="leadsRange" type="range" min="1" max="5000" step="1" value="100" aria-label="Total leads" />
+            <div class="range-scale"><span>1</span><span id="leadsRangeMax">5,000</span></div>
+          </div>
+          <div class="input-grid">
+            <label class="input-tile"><span><b>Cost per lead</b><small>Marketing acquisition</small></span><span class="number-box"><input id="costPerLead" type="number" min="0" step="0.01" value="4" inputmode="decimal" /><em class="currency-symbol">$</em></span></label>
+            <label class="input-tile yellow"><span><b>Selling price</b><small>Average order value</small></span><span class="number-box"><input id="price" type="number" min="0" step="0.01" value="47" inputmode="decimal" /><em class="currency-symbol">$</em></span></label>
+            <label class="input-tile pink"><span><b>Product cost</b><small>Per delivered order</small></span><span class="number-box"><input id="productCost" type="number" min="0" step="0.01" value="5" inputmode="decimal" /><em class="currency-symbol">$</em></span></label>
+            <label class="input-tile purple" id="parcelWeightTile" hidden><span><b>Parcel weight</b><small>$1/kg above 5 kg</small></span><span class="number-box"><input id="parcelWeight" type="number" min="0" step="0.1" value="1" inputmode="decimal" /><em>kg</em></span></label>
+          </div>
+          <div class="rate-stack">
+            <div class="rate-control"><div><label for="confirmation"><b>Confirmation rate</b><small>Confirmed orders ÷ leads</small></label><span class="number-box compact"><input id="confirmation" type="number" min="0" max="100" step="1" value="50" /><em>%</em></span></div><input class="range" id="confirmationRange" type="range" min="0" max="100" step="1" value="50" aria-label="Confirmation rate" /></div>
+            <div class="rate-control"><div><label for="delivery"><b>Delivery rate</b><small>Delivered orders ÷ confirmed</small></label><span class="number-box compact"><input id="delivery" type="number" min="0" max="100" step="1" value="45" /><em>%</em></span></div><input class="range" id="deliveryRange" type="range" min="0" max="100" step="1" value="45" aria-label="Delivery rate" /></div>
+          </div>
+          <div class="metric-grid">
+            <article><span>Net margin</span><strong id="marginPercent">14.43%</strong></article>
+            <article><span>Profit / delivered</span><strong id="profitPerDelivered">$6.78</strong></article>
+            <article><span>Break-even CPL</span><strong id="maxCpl">$5.53</strong></article>
+          </div>
+          <div class="conversion-flow" aria-label="Order conversion summary"><div><span>Leads</span><strong id="leadsSummary">100</strong></div><i>→</i><div><span>Confirmed</span><strong id="confirmedSummary">50</strong></div><i>→</i><div><span>Delivered</span><strong id="deliveredSummary">23</strong></div></div>
+        </section>
+
+        <section class="invoice-panel panel" aria-labelledby="invoice-title">
+          <div class="section-heading invoice-heading"><div><p class="section-kicker" id="invoiceKicker">COD Network · Saudi Arabia</p><h2 id="invoice-title">Profit &amp; fee breakdown</h2></div><span class="currency-pill" id="currencyPill">USD</span></div>
+          <div class="invoice-table" role="table" aria-label="Fee calculation breakdown">
+            <div class="invoice-row table-head" role="row"><span>Description</span><span>Rate</span><span>Quantity</span><span>Total</span></div>
+            <div class="invoice-row cream" role="row"><span>Lead service</span><span id="leadRate">$0.50</span><span id="leadQty">100</span><b id="leadFee">$50.00</b></div>
+            <div class="invoice-row cream" role="row"><span>Confirmation service</span><span id="confirmedRate">$1.00</span><span id="confirmedQty">50</span><b id="confirmedFee">$50.00</b></div>
+            <div class="invoice-row cream" role="row"><span>Delivered service</span><span id="deliveredRate">$2.00</span><span id="deliveredQty">22.5</span><b id="deliveredHandlingFee">$45.00</b></div>
+            <div class="invoice-row blue" role="row"><span>Returned shipping base</span><span id="returnedShipRate">$2.99</span><span id="shippingQty">50</span><b id="shippingBaseFee">$149.50</b></div>
+            <div class="invoice-row blue" role="row"><span>Delivered shipping uplift</span><span id="deliveredShipUpliftRate">$2.00</span><span id="deliveredShipQty">22.5</span><b id="shippingUpliftFee">$45.00</b></div>
+            <div class="invoice-row blue" role="row"><span>Fulfillment</span><span id="fulfillmentRate">Free</span><span id="fulfillmentQty">22.5</span><b id="fulfillmentFee">$0.00</b></div>
+            <div class="invoice-row blue" role="row"><span>COD collection</span><span id="codRate">5%</span><span id="salesBase">$1,057.50</span><b id="codFee">$52.88</b></div>
+          </div>
+          <div class="totals-grid">
+            <div class="total-card platform-total"><span>Total platform charges</span><strong id="serviceFees">$392.38</strong></div>
+            <div class="total-card sales-total"><span>COD sales collected</span><strong id="sales">$1,057.50</strong></div>
+            <div class="total-card invoice-total"><span>After platform charges</span><strong id="codInvoice">$665.13</strong></div>
+          </div>
+          <div class="cost-block">
+            <div><span>Total product cost</span><small id="productMath">$5.00 × 22.5</small><strong id="totalProduct">$112.50</strong></div>
+            <div><span>Total marketing ads</span><small id="marketingMath">$4.00 × 100</small><strong id="totalMarketing">$400.00</strong></div>
+            <div><span>Total charges</span><small>Platform + product + ads</small><strong id="totalCharges">$904.88</strong></div>
+          </div>
+          <div class="profit-card" id="profitCard"><span><small>Bottom line</small>Net profit</span><strong id="netProfit">$152.63</strong></div>
+        </section>
+      </div>
+
+      <section class="matrix-panel panel" aria-labelledby="matrix-title">
+        <div class="matrix-header">
+          <div><p class="section-kicker">Profit per delivered order</p><h2 id="matrix-title">Confirmation × delivery map</h2></div>
+          <div class="matrix-actions"><div class="legend" aria-label="Profit legend"><span class="loss-key"></span> Loss <span class="gain-key"></span> Profit</div><button id="focusCellButton" type="button">Show my scenario</button></div>
+        </div>
+        <p class="matrix-note" id="matrixNote">Click any number to load its confirmation and delivery rates into the simulator. Yellow headers and the purple outline mark your current rates.</p>
+        <div class="matrix-scroll" id="matrixScroll" tabindex="0" aria-label="Scrollable sensitivity analysis"><table class="matrix-table" id="matrixTable"><caption class="sr-only">Profit per delivered order at combinations of confirmation and delivery rates</caption></table></div>
+        <div class="matrix-footer"><div><span class="formula-dot"></span><span>Current profit / delivered</span><strong id="matrixCurrent">$6.78</strong></div><p>Swipe horizontally on small screens to see all confirmation scenarios.</p></div>
+      </section>
+    </main>
+    <footer><span>Amine.loading GCC COD PROFIT SIMU</span><span id="footerSource">Fees loaded from the supplied COD Network dashboard.</span></footer>
+  </body>
+</html>
