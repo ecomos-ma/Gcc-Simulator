@@ -3,11 +3,366 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="GCC cash-on-delivery profit simulator for COD Network and COD Partner." />
+    <meta name="description" content="Cash-on-delivery profit simulator for COD Network, COD Partner, and Local Market." />
     <title>Amine.loading GCC COD PROFIT SIMU</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1519'/%3E%3Cpath d='M16 19h32v27H16z' fill='%23b9ff47'/%3E%3Cpath d='M22 27h20M22 33h12M22 39h17' stroke='%230b1519' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./app.css" />
-    <script src="./app.js" defer></script>
+    <style>
+:root {
+  color-scheme: light;
+  --ink: #071a2b;
+  --ink-soft: #12344d;
+  --muted: #49667c;
+  --paper: #edf7ff;
+  --surface: #ffffff;
+  --line: #b9d6e8;
+  --line-dark: #173c56;
+  --lime: #c8ff45;
+  --green: #00df72;
+  --yellow: #ffea35;
+  --orange: #ff941f;
+  --pink: #ffe5ef;
+  --blue: #dff2ff;
+  --purple: #4f46e5;
+  --cyan: #18c8ff;
+  --red: #ef1735;
+  --font-text: "Segoe UI Variable Text", "Aptos", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Aptos Display", "Segoe UI", system-ui, sans-serif;
+  --font-number: "Bahnschrift", "DIN Alternate", "Roboto Mono", "Segoe UI", sans-serif;
+  --shadow: 0 16px 42px rgba(8, 49, 78, .11);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 92% -7%, rgba(24,200,255,.22), transparent 34rem),
+    radial-gradient(circle at 5% 24%, rgba(200,255,69,.12), transparent 28rem),
+    linear-gradient(180deg, #e7f5ff 0, var(--paper) 22rem);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+button, input, select { font: inherit; }
+button, select, input[type="range"] { cursor: pointer; }
+h1, h2, p { margin: 0; }
+h1, h2 { font-family: var(--font-display); font-weight: 800; }
+h1 { font-size: clamp(1.12rem, 1.7vw, 1.45rem); line-height: 1.08; letter-spacing: -.025em; }
+h2 { font-size: 1.22rem; line-height: 1.2; letter-spacing: -.018em; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 16px clamp(16px, 2.4vw, 38px);
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  background: rgba(7,26,43,.96);
+  color: #fff;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 30px rgba(7,26,43,.16);
+}
+.brand-lockup, .header-status { display: flex; align-items: center; gap: 13px; }
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 13px;
+  background: linear-gradient(145deg, var(--lime), #8cf25f);
+  color: var(--ink);
+  font: 900 1.3rem var(--font-display);
+  box-shadow: 0 8px 22px rgba(200,255,69,.2), inset 0 0 0 1px rgba(255,255,255,.44);
+}
+.eyebrow, .section-kicker {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 850;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.topbar .eyebrow { color: #75dcff; }
+.local-pill, .live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.1);
+  color: #dff6ff;
+  font-size: .76rem;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.live-badge { background: #e8fff7; color: #176044; }
+.local-pill i, .live-badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(24,220,84,.13); }
+.reset-button, #focusCellButton {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 10px;
+  background: white;
+  color: var(--ink);
+  font-weight: 800;
+  transition: transform .16s ease, background .16s ease;
+}
+.reset-button:hover, #focusCellButton:hover { background: var(--lime); transform: translateY(-1px); }
+#focusCellButton { border-color: rgba(7,26,43,.24); }
+
+.page-shell { width: min(1680px, 100%); margin: 0 auto; padding: 18px clamp(12px, 1.7vw, 28px) 24px; }
+.setup-bar {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.2fr) repeat(4, minmax(145px, 1fr)) minmax(210px, 1.35fr);
+  gap: 10px;
+  align-items: stretch;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--cyan);
+  border-radius: 16px;
+  background: rgba(255,255,255,.98);
+  box-shadow: var(--shadow);
+}
+.setup-bar.is-local { grid-template-columns: minmax(200px, 1.05fr) minmax(190px, .9fr) minmax(180px, .85fr) minmax(340px, 1.8fr); }
+.setup-copy { align-self: center; padding: 4px 8px; }
+.select-card {
+  display: grid;
+  gap: 6px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #f4faff;
+}
+.select-card span { color: #31536c; font-size: .76rem; font-weight: 850; letter-spacing: .055em; text-transform: uppercase; }
+.select-card select {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 30px 0 9px;
+  border: 1px solid #9dc1d8;
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  font-size: .92rem;
+  font-weight: 800;
+}
+.select-card select:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(79,70,229,.13); }
+.platform-card { background: #f1ffdc; border-color: #9fd55e; }
+.source-note { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 8px 10px; border-left: 1px solid var(--line); }
+.source-note span { align-self: flex-start; padding: 5px 8px; border-radius: 6px; background: var(--ink); color: var(--lime); font-size: .73rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.source-note p { color: var(--muted); font-size: .78rem; line-height: 1.45; }
+
+.fee-ribbon {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin: 12px 0;
+  border: 1px solid var(--line-dark);
+  border-radius: 13px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--ink), var(--ink-soft));
+  color: white;
+}
+.fee-tile { position: relative; min-width: 0; padding: 10px 12px; border: 0; border-right: 1px solid rgba(255,255,255,.15); border-radius: 0; background: transparent; color: white; text-align: left; opacity: 1; }
+.fee-tile:last-child { border-right: 0; }
+.fee-tile:disabled { cursor: default; opacity: 1; }
+.fee-tile:not(:disabled) { padding-right: 82px; cursor: pointer; transition: background .16s ease, box-shadow .16s ease; }
+.fee-tile:not(:disabled):hover { background: rgba(200,255,69,.11); box-shadow: inset 0 0 0 1px rgba(200,255,69,.42); }
+.fee-tile:not(:disabled):focus-visible { position: relative; z-index: 1; outline: 3px solid var(--yellow); outline-offset: -3px; }
+.fee-ribbon span { display: block; color: #b8d5e7; font-size: .73rem; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fee-ribbon strong { display: block; margin-top: 4px; color: var(--lime); font: 750 1rem var(--font-number); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fee-edit-hint { position: absolute; top: 50%; right: 12px; padding: 4px 8px; border: 1px solid rgba(200,255,69,.55); border-radius: 999px; background: rgba(200,255,69,.1); color: var(--lime); font-size: .68rem; font-style: normal; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; transform: translateY(-50%); }
+
+.top-grid { display: grid; grid-template-columns: minmax(330px, .78fr) minmax(600px, 1.55fr); gap: 14px; align-items: start; }
+.panel { background: rgba(255,255,255,.99); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+.control-panel, .invoice-panel, .matrix-panel { padding: 18px; }
+.section-heading, .matrix-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+
+.lead-control { margin-top: 15px; padding: 13px; border: 1px solid var(--line-dark); border-radius: 11px; background: #fff; }
+.lead-control-head, .rate-control > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+label b { display: block; font-size: .92rem; font-weight: 800; }
+label small { display: block; margin-top: 3px; color: var(--muted); font-size: .76rem; }
+.number-box {
+  display: grid;
+  grid-template-columns: minmax(54px, 1fr) auto;
+  align-items: center;
+  min-width: 116px;
+  border: 1px solid #b9c2bc;
+  border-radius: 9px;
+  background: white;
+  overflow: hidden;
+}
+.number-box.compact { min-width: 92px; }
+.number-box input {
+  width: 76px;
+  min-height: 38px;
+  padding: 0 5px 0 8px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 750 1rem var(--font-number);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.number-box.compact input { width: 55px; }
+.number-box em { padding-right: 9px; color: var(--red); font-size: .78rem; font-style: normal; font-weight: 850; }
+.range { width: 100%; height: 7px; margin: 13px 0 0; accent-color: var(--purple); }
+.range-scale { display: flex; justify-content: space-between; margin-top: 3px; color: #5f7890; font-size: .72rem; font-weight: 700; }
+
+.input-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+.input-tile { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 66px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #f3faff; }
+.input-tile.yellow { background: #fffbd1; }
+.input-tile.pink { background: #ffedf3; }
+.input-tile.purple { background: #f0eaff; border-color: #cabbea; }
+[hidden] { display: none !important; }
+.rate-stack { display: grid; gap: 9px; margin-top: 10px; }
+.rate-control { padding: 12px 13px 9px; border: 1px solid var(--line); border-radius: 10px; background: #f3faff; }
+.rate-control .range { margin-top: 10px; }
+
+.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 12px; }
+.metric-grid article { min-width: 0; padding: 11px; border: 1px solid #b7cde7; border-radius: 9px; background: #eef4ff; }
+.metric-grid span { display: block; color: var(--muted); font-size: .73rem; font-weight: 750; }
+.metric-grid strong { display: block; margin-top: 4px; color: var(--purple); font: 750 1.06rem var(--font-number); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conversion-flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 7px; margin-top: 12px; padding: 11px 10px; border: 1px solid var(--line-dark); border-radius: 10px; background: var(--lime); }
+.conversion-flow div { text-align: center; }
+.conversion-flow span { display: block; font-size: .72rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
+.conversion-flow strong { display: block; margin-top: 2px; font: 750 1.05rem var(--font-number); font-variant-numeric: tabular-nums; }
+.conversion-flow i { opacity: .43; font-style: normal; }
+
+.invoice-panel { border-top: 5px solid var(--orange); }
+.invoice-heading { margin-bottom: 13px; }
+.currency-pill { padding: 7px 10px; border-radius: 999px; background: var(--ink); color: var(--cyan); font-size: .76rem; font-weight: 850; letter-spacing: .06em; }
+.invoice-table { border: 1px solid var(--line-dark); border-radius: 10px; overflow: hidden; }
+.invoice-row { display: grid; grid-template-columns: minmax(155px, 1.5fr) minmax(72px, .65fr) minmax(78px, .7fr) minmax(88px, .85fr); min-height: 39px; border-bottom: 1px solid rgba(23,60,86,.24); font-size: .84rem; }
+.invoice-row:last-child { border-bottom: 0; }
+.invoice-row > * { display: flex; align-items: center; justify-content: flex-end; min-width: 0; padding: 7px 9px; border-left: 1px solid rgba(16,35,41,.24); white-space: nowrap; }
+.invoice-row > *:first-child { justify-content: flex-start; border-left: 0; font-weight: 750; white-space: normal; }
+.invoice-row > *:not(:first-child), .invoice-row b { font-family: var(--font-number); font-variant-numeric: tabular-nums; }
+.invoice-row b { color: var(--red); font-weight: 750; }
+.invoice-row.table-head { background: linear-gradient(135deg, var(--ink), var(--ink-soft)); color: white; font-size: .73rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.invoice-row.cream { background: #fff9da; }
+.invoice-row.blue { background: var(--blue); }
+.totals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.total-card { min-width: 0; padding: 11px 12px; border: 1px solid var(--line-dark); border-radius: 9px; }
+.total-card span { display: block; font-size: .75rem; font-weight: 800; }
+.total-card strong { display: block; margin-top: 5px; font: 750 1.05rem var(--font-number); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.platform-total { background: #fff08a; }
+.sales-total { background: linear-gradient(135deg, #55ff9c, #00df72); }
+.invoice-total { background: linear-gradient(135deg, #ffc34c, var(--orange)); }
+.cost-block { margin-top: 12px; border: 1px solid var(--line-dark); border-radius: 9px; overflow: hidden; }
+.cost-block div { display: grid; grid-template-columns: 1.25fr .95fr .75fr; gap: 8px; align-items: center; padding: 10px 11px; background: #fff0f5; font-size: .81rem; }
+.cost-block div + div { border-top: 1px solid var(--line-dark); }
+.cost-block span { font-weight: 800; }
+.cost-block small { color: var(--muted); text-align: center; }
+.cost-block strong { color: var(--red); text-align: right; white-space: nowrap; font-family: var(--font-number); font-variant-numeric: tabular-nums; }
+.profit-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 80px; margin-top: 12px; padding: 14px 16px; border: 2px solid #009c4f; border-radius: 10px; background: linear-gradient(135deg, #66ffa8, #00df72); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+.profit-card span { font-weight: 900; }
+.profit-card span small { display: block; margin-bottom: 4px; font-size: .72rem; letter-spacing: .11em; text-transform: uppercase; opacity: .7; }
+.profit-card strong { font: 780 clamp(1.6rem, 2.3vw, 2.2rem) var(--font-number); font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -.02em; }
+.profit-card.is-loss { border-color: #bd001c; background: linear-gradient(135deg, #ff7784, #ff273f); color: #35000a; }
+
+.matrix-panel { margin-top: 14px; padding: 18px 14px 14px; border-top: 5px solid var(--purple); box-shadow: 0 18px 48px rgba(79,70,229,.12); }
+.matrix-header { padding: 0 4px; }
+.matrix-actions { display: flex; align-items: center; gap: 12px; }
+.legend { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .76rem; font-weight: 750; white-space: nowrap; }
+.legend span { width: 12px; height: 12px; border: 1px solid rgba(16,35,41,.22); }
+.loss-key { background: #ff6877; }
+.gain-key { margin-left: 4px; background: #32e77f; }
+#focusCellButton { min-height: 36px; padding: 0 12px; font-size: .78rem; }
+.matrix-note { margin: 8px 4px 12px; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+.matrix-scroll { max-width: 100%; overflow: auto; border: 1px solid var(--line-dark); border-radius: 9px; background: white; scrollbar-color: #87969b #edf0eb; scrollbar-width: auto; }
+.matrix-table { width: 100%; min-width: 1120px; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-family: var(--font-number); font-variant-numeric: tabular-nums; }
+.matrix-table th, .matrix-table td { height: 34px; padding: 5px 3px; border-right: 1px solid rgba(23,60,86,.23); border-bottom: 1px solid rgba(23,60,86,.23); text-align: center; font-size: clamp(.72rem, .75vw, .8rem); font-weight: 650; white-space: nowrap; overflow: visible; }
+.matrix-table tr:last-child > * { border-bottom: 0; }
+.matrix-table tr > *:last-child { border-right: 0; }
+.matrix-table thead th { position: sticky; top: 0; z-index: 3; background: linear-gradient(180deg, #d6ff73, var(--lime)); color: #17250f; font-weight: 800; }
+.matrix-table thead th:first-child { left: 0; z-index: 5; width: 58px; background: var(--ink); color: white; line-height: 1.1; }
+.matrix-table tbody th { position: sticky; left: 0; z-index: 2; width: 58px; background: #fff1b8; color: #5a4300; font-weight: 800; }
+.matrix-table td.loss { background: #ff8f9b; color: #990016; }
+.matrix-table td.gain-low { background: #fff3a3; color: #775900; }
+.matrix-table td.gain { background: #78f3aa; color: #005f36; }
+.matrix-table td.gain-high { background: #16dc72; color: #003f22; }
+.matrix-table td.matrix-choice { cursor: pointer; transition: filter .14s ease, transform .14s ease; }
+.matrix-table td.matrix-choice:hover { filter: saturate(1.18) brightness(.96); box-shadow: inset 0 0 0 2px rgba(7,26,43,.5); }
+.matrix-table td.matrix-choice:focus-visible { position: relative; z-index: 2; outline: 3px solid var(--purple); outline-offset: -3px; }
+.matrix-table .selected-axis { background: var(--yellow) !important; color: var(--ink) !important; }
+.matrix-table td.selected-cell { position: relative; z-index: 1; box-shadow: inset 0 0 0 3px var(--purple); color: var(--purple); font-weight: 950; }
+.matrix-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 4px 0; }
+.matrix-footer div { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; }
+.matrix-footer div span:nth-child(2) { color: var(--muted); font-size: .75rem; font-weight: 750; }
+.matrix-footer strong { grid-column: 2; font: 750 1.25rem var(--font-number); font-variant-numeric: tabular-nums; }
+.formula-dot { grid-row: 1 / span 2; width: 9px; height: 29px; border-radius: 10px; background: var(--purple); }
+.matrix-footer p { color: var(--muted); font-size: .74rem; text-align: right; }
+
+footer { display: flex; justify-content: space-between; gap: 22px; padding: 0 clamp(18px, 2.4vw, 38px) 24px; color: #526f83; font-size: .75rem; line-height: 1.5; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+button:focus-visible, input:focus-visible, select:focus-visible, .matrix-scroll:focus-visible { outline: 3px solid rgba(79,70,229,.35); outline-offset: 2px; }
+
+@media (max-width: 1240px) {
+  .setup-bar { grid-template-columns: repeat(4, 1fr); }
+  .setup-copy { grid-column: 1 / 3; }
+  .source-note { grid-column: 3 / 5; border-left: 0; border-top: 1px solid var(--line); }
+  .top-grid { grid-template-columns: minmax(300px, .86fr) minmax(520px, 1.4fr); }
+  .fee-ribbon { overflow-x: auto; }
+  .fee-tile { min-width: 130px; }
+  .setup-bar.is-local { grid-template-columns: repeat(3, 1fr); }
+  .setup-bar.is-local .setup-copy { grid-column: auto; }
+  .setup-bar.is-local .source-note { grid-column: 1 / -1; }
+}
+
+@media (max-width: 900px) {
+  .top-grid { grid-template-columns: 1fr; }
+  .setup-bar { grid-template-columns: repeat(2, 1fr); }
+  .setup-bar.is-local { grid-template-columns: repeat(2, 1fr); }
+  .setup-bar.is-local .setup-copy { grid-column: 1 / -1; }
+  .setup-copy, .source-note { grid-column: 1 / -1; }
+  .fee-ribbon { grid-template-columns: repeat(7, minmax(130px, 1fr)); overflow-x: auto; }
+  .matrix-table { min-width: 1080px; }
+}
+
+@media (max-width: 620px) {
+  .topbar { position: static; align-items: flex-start; flex-wrap: wrap; }
+  .header-status { width: 100%; justify-content: space-between; }
+  .page-shell { padding: 12px; }
+  .setup-bar { grid-template-columns: 1fr; }
+  .setup-bar.is-local { grid-template-columns: 1fr; }
+  .setup-copy, .source-note { grid-column: auto; }
+  .source-note { border-top: 1px solid var(--line); }
+  .control-panel, .invoice-panel, .matrix-panel { padding: 14px 11px; }
+  .metric-grid { grid-template-columns: 1fr; }
+  .metric-grid article { display: flex; justify-content: space-between; align-items: baseline; }
+  .invoice-row { grid-template-columns: minmax(125px, 1.4fr) minmax(64px, .62fr) minmax(67px, .65fr) minmax(77px, .78fr); font-size: .74rem; }
+  .invoice-row > * { padding: 7px 4px; }
+  .totals-grid { grid-template-columns: 1fr; }
+  .total-card { display: flex; justify-content: space-between; align-items: center; }
+  .total-card strong { margin: 0; }
+  .cost-block div { grid-template-columns: 1.25fr .82fr .72fr; gap: 4px; padding: 9px 7px; font-size: .74rem; }
+  .matrix-header, .matrix-footer { align-items: flex-start; flex-direction: column; }
+  .matrix-actions { width: 100%; justify-content: space-between; }
+  .matrix-footer p { text-align: left; }
+  footer { flex-direction: column; gap: 5px; padding: 2px 18px 20px; }
+}
+
+@media (max-width: 390px) {
+  .local-pill { display: none; }
+  .reset-button { width: 100%; }
+  .lead-control-head, .rate-control > div { align-items: flex-start; }
+  .number-box { min-width: 104px; }
+  .number-box input { width: 65px; }
+  .invoice-row { grid-template-columns: minmax(112px, 1.3fr) 62px 64px 73px; font-size: .7rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+}
+    </style>
   </head>
   <body>
     <header class="topbar">
@@ -22,23 +377,23 @@
     </header>
 
     <main class="page-shell">
-      <section class="setup-bar" aria-labelledby="setup-title">
+      <section class="setup-bar" id="setupBar" aria-labelledby="setup-title">
         <div class="setup-copy"><p class="section-kicker">Pricing setup</p><h2 id="setup-title">Choose your operation</h2></div>
-        <label class="select-card platform-card"><span>Platform</span><select id="platform" aria-label="Platform" autocomplete="off"><option value="codnetwork">COD Network</option><option value="codpartner">COD Partner</option></select></label>
+        <label class="select-card platform-card"><span>Platform</span><select id="platform" aria-label="Platform" autocomplete="off"><option value="codnetwork">COD Network</option><option value="codpartner">COD Partner</option><option value="local-seller">Seller</option><option value="local-drop">Space Seller</option></select></label>
         <label class="select-card"><span>Country / market</span><select id="country" aria-label="Country or market" autocomplete="off"></select></label>
-        <label class="select-card"><span>Product type</span><select id="productType" aria-label="Product type" autocomplete="off"><option value="gadget">Gadget</option><option value="cosmetic">Cosmetic</option></select></label>
-        <label class="select-card"><span id="serviceModeLabel">Service setup</span><select id="serviceMode" aria-label="Service setup" autocomplete="off"></select></label>
+        <label class="select-card" id="productTypeCard"><span>Product type</span><select id="productType" aria-label="Product type" autocomplete="off"><option value="gadget">Gadget</option><option value="cosmetic">Cosmetic</option></select></label>
+        <label class="select-card" id="serviceModeCard"><span id="serviceModeLabel">Service setup</span><select id="serviceMode" aria-label="Service setup" autocomplete="off"></select></label>
         <div class="source-note"><span id="sourceBadge">COD Network</span><p id="sourceNote">Domestic fees from the supplied COD Network dashboard.</p></div>
       </section>
 
       <section class="fee-ribbon" aria-label="Selected tariff">
-        <div><span>Lead</span><strong id="tariffLead">$0.50</strong></div>
-        <div><span>Confirmed</span><strong id="tariffConfirmed">$1.00</strong></div>
-        <div><span>Delivered service</span><strong id="tariffDelivered">$2.00</strong></div>
-        <div><span>Shipping delivered</span><strong id="tariffShipDelivered">$4.99</strong></div>
-        <div><span>Shipping returned</span><strong id="tariffShipReturned">$2.99</strong></div>
-        <div><span>COD fee</span><strong id="tariffCod">5%</strong></div>
-        <div><span>VAT</span><strong id="tariffVat">Included</strong></div>
+        <button class="fee-tile" type="button" id="tariffTileLead" disabled><span id="tariffLeadLabel">Lead</span><strong id="tariffLead">$0.50</strong><em class="fee-edit-hint" id="tariffLeadEdit" hidden>Edit fee</em></button>
+        <button class="fee-tile" type="button" id="tariffTileConfirmed" disabled><span id="tariffConfirmedLabel">Confirmed</span><strong id="tariffConfirmed">$1.00</strong><em class="fee-edit-hint" id="tariffConfirmedEdit" hidden>Edit fee</em></button>
+        <button class="fee-tile" type="button" id="tariffTileDelivered" disabled><span id="tariffDeliveredLabel">Delivered service</span><strong id="tariffDelivered">$2.00</strong><em class="fee-edit-hint" id="tariffDeliveredEdit" hidden>Edit fee</em></button>
+        <button class="fee-tile" type="button" id="tariffTileShipDelivered" disabled><span>Shipping delivered</span><strong id="tariffShipDelivered">$4.99</strong></button>
+        <button class="fee-tile" type="button" id="tariffTileShipReturned" disabled><span>Shipping returned</span><strong id="tariffShipReturned">$2.99</strong></button>
+        <button class="fee-tile" type="button" id="tariffTileCod" disabled><span>COD fee</span><strong id="tariffCod">5%</strong></button>
+        <button class="fee-tile" type="button" id="tariffTileVat" disabled><span>VAT</span><strong id="tariffVat">Included</strong></button>
       </section>
 
       <div class="top-grid">
@@ -71,13 +426,13 @@
           <div class="section-heading invoice-heading"><div><p class="section-kicker" id="invoiceKicker">COD Network · Saudi Arabia</p><h2 id="invoice-title">Profit &amp; fee breakdown</h2></div><span class="currency-pill" id="currencyPill">USD</span></div>
           <div class="invoice-table" role="table" aria-label="Fee calculation breakdown">
             <div class="invoice-row table-head" role="row"><span>Description</span><span>Rate</span><span>Quantity</span><span>Total</span></div>
-            <div class="invoice-row cream" role="row"><span>Lead service</span><span id="leadRate">$0.50</span><span id="leadQty">100</span><b id="leadFee">$50.00</b></div>
-            <div class="invoice-row cream" role="row"><span>Confirmation service</span><span id="confirmedRate">$1.00</span><span id="confirmedQty">50</span><b id="confirmedFee">$50.00</b></div>
-            <div class="invoice-row cream" role="row"><span>Delivered service</span><span id="deliveredRate">$2.00</span><span id="deliveredQty">22.5</span><b id="deliveredHandlingFee">$45.00</b></div>
-            <div class="invoice-row blue" role="row"><span>Returned shipping base</span><span id="returnedShipRate">$2.99</span><span id="shippingQty">50</span><b id="shippingBaseFee">$149.50</b></div>
-            <div class="invoice-row blue" role="row"><span>Delivered shipping uplift</span><span id="deliveredShipUpliftRate">$2.00</span><span id="deliveredShipQty">22.5</span><b id="shippingUpliftFee">$45.00</b></div>
-            <div class="invoice-row blue" role="row"><span>Fulfillment</span><span id="fulfillmentRate">Free</span><span id="fulfillmentQty">22.5</span><b id="fulfillmentFee">$0.00</b></div>
-            <div class="invoice-row blue" role="row"><span>COD collection</span><span id="codRate">5%</span><span id="salesBase">$1,057.50</span><b id="codFee">$52.88</b></div>
+            <div class="invoice-row cream" id="leadFeeRow" role="row"><span id="leadFeeLabel">Lead service</span><span id="leadRate">$0.50</span><span id="leadQty">100</span><b id="leadFee">$50.00</b></div>
+            <div class="invoice-row cream" id="confirmedFeeRow" role="row"><span id="confirmedFeeLabel">Confirmation service</span><span id="confirmedRate">$1.00</span><span id="confirmedQty">50</span><b id="confirmedFee">$50.00</b></div>
+            <div class="invoice-row cream" id="deliveredFeeRow" role="row"><span id="deliveredFeeLabel">Delivered service</span><span id="deliveredRate">$2.00</span><span id="deliveredQty">22.5</span><b id="deliveredHandlingFee">$45.00</b></div>
+            <div class="invoice-row blue" id="shippingBaseRow" role="row"><span>Returned shipping base</span><span id="returnedShipRate">$2.99</span><span id="shippingQty">50</span><b id="shippingBaseFee">$149.50</b></div>
+            <div class="invoice-row blue" id="shippingUpliftRow" role="row"><span>Delivered shipping uplift</span><span id="deliveredShipUpliftRate">$2.00</span><span id="deliveredShipQty">22.5</span><b id="shippingUpliftFee">$45.00</b></div>
+            <div class="invoice-row blue" id="fulfillmentRow" role="row"><span>Fulfillment</span><span id="fulfillmentRate">Free</span><span id="fulfillmentQty">22.5</span><b id="fulfillmentFee">$0.00</b></div>
+            <div class="invoice-row blue" id="codFeeRow" role="row"><span>COD collection</span><span id="codRate">5%</span><span id="salesBase">$1,057.50</span><b id="codFee">$52.88</b></div>
           </div>
           <div class="totals-grid">
             <div class="total-card platform-total"><span>Total platform charges</span><strong id="serviceFees">$392.38</strong></div>
@@ -104,5 +459,738 @@
       </section>
     </main>
     <footer><span>Amine.loading GCC COD PROFIT SIMU</span><span id="footerSource">Fees loaded from the supplied COD Network dashboard.</span></footer>
+    <script>
+(() => {
+  "use strict";
+
+  const DEFAULTS = {
+    platform: "codnetwork",
+    country: "ksa",
+    productType: "gadget",
+    serviceMode: "with-center",
+    leads: 100,
+    costPerLead: 4,
+    confirmation: 50,
+    delivery: 45,
+    price: 47,
+    productCost: 5,
+    parcelWeight: 1,
+  };
+
+  const PRODUCT_FEES = {
+    gadget: { lead: 0.5, confirmed: 1, delivered: 2 },
+    cosmetic: { lead: 0.5, confirmed: 2, delivered: 3 },
+  };
+
+  const NETWORK_MARKETS = {
+    ksa: market("Saudi Arabia", "🇸🇦", "USD", 2.99, 4.99, 6.99, "Included"),
+    uae: market("United Arab Emirates", "🇦🇪", "USD", 4.99, 5.99, 6.99, "Included"),
+    bahrain: market("Bahrain", "🇧🇭", "USD", 5.99, 6.99, 7.99, "Included"),
+    oman: market("Oman", "🇴🇲", "USD", 5.99, 6.99, 7.99, "Included"),
+    kuwait: market("Kuwait", "🇰🇼", "USD", 5.99, 6.99, 7.99, "Included"),
+    qatar: market("Qatar", "🇶🇦", "USD", 5.99, 6.99, 7.99, "Included"),
+    morocco: {
+      ...market("Morocco", "🇲🇦", "MAD", 9, 35, null, "Included", 0, 8),
+      callCenter: {
+        gadget: { lead: 2, confirmed: 4, delivered: 7 },
+        cosmetic: { lead: 2, confirmed: 4, delivered: 7 },
+      },
+      codLabel: "Not listed",
+      notice: "The supplied Morocco tariff does not list a separate COD percentage, so no extra COD percentage is added.",
+    },
+    spain: market("Spain", "🇪🇸", "EUR", 6.99, 7.99, null, "0%"),
+    portugal: market("Portugal", "🇵🇹", "EUR", 6.99, 7.99, null, "0%"),
+    poland: market("Poland", "🇵🇱", "EUR", 5.99, 6.99, null, "0%"),
+    czechia: market("Czech Republic", "🇨🇿", "EUR", 6.99, 7.99, null, "0%"),
+    hungary: market("Hungary", "🇭🇺", "EUR", 6.99, 7.99, null, "0%"),
+    slovakia: market("Slovakia", "🇸🇰", "EUR", 6.99, 7.99, null, "0%"),
+    romania: market("Romania", "🇷🇴", "EUR", 6.99, 7.99, null, "0%"),
+    lithuania: market("Lithuania", "🇱🇹", "EUR", 6.99, 7.99, null, "0%"),
+    slovenia: market("Slovenia", "🇸🇮", "EUR", 6.99, 7.99, null, "0%"),
+    croatia: market("Croatia", "🇭🇷", "EUR", 6.99, 7.99, null, "0%"),
+    latvia: market("Latvia", "🇱🇻", "EUR", 6.99, 7.99, null, "0%"),
+    colombia: market("Colombia", "🇨🇴", "USD", 4.49, 4.49, null, "0%"),
+    panama: market("Panama", "🇵🇦", "USD", 7.99, 7.99, null, "0%"),
+    ecuador: market("Ecuador", "🇪🇨", "USD", 9, 9, null, "0%"),
+  };
+
+  const PARTNER_MARKETS = {
+    uae: market("United Arab Emirates", "🇦🇪", "USD", 4.99, 4.99, null, "Not listed"),
+    ksa: market("Saudi Arabia", "🇸🇦", "USD", 2.99, 4.99, null, "Not listed"),
+    kuwait: market("Kuwait", "🇰🇼", "USD", 5.99, 5.99, null, "Not listed"),
+    qatar: market("Qatar", "🇶🇦", "USD", 5.99, 5.99, null, "Not listed"),
+    oman: market("Oman", "🇴🇲", "USD", 5.99, 5.99, null, "Not listed"),
+    bahrain: market("Bahrain", "🇧🇭", "USD", 5.99, 5.99, null, "Not listed"),
+    iraq: market("Iraq", "🇮🇶", "USD", 4.99, 4.99, null, "Not listed"),
+  };
+
+  const LOCAL_MARKETS = {
+    morocco: {
+      name: "Morocco",
+      flag: "🇲🇦",
+      currency: "DH",
+      returned: 0,
+      delivered: 0,
+      noCallCenter: null,
+      vat: "0%",
+      codRate: 0,
+      fulfillment: 0,
+      callCenter: { lead: 0, confirmed: 0, delivered: 0 },
+      codLabel: "None",
+    },
+  };
+
+  const LOCAL_FEE_DEFAULTS = {
+    "local-seller": { confirmationDelivered: 10, shippingDelivered: 38, fulfillmentConfirmed: 1 },
+    "local-drop": { leadEntry: 2, deliveredOrder: 63 },
+  };
+
+  const LOCAL_FEES = {
+    "local-seller": { ...LOCAL_FEE_DEFAULTS["local-seller"] },
+    "local-drop": { ...LOCAL_FEE_DEFAULTS["local-drop"] },
+  };
+
+  const MARKET_GROUPS = {
+    codnetwork: [
+      { label: "GCC domestic", ids: ["ksa", "uae", "bahrain", "oman", "kuwait", "qatar"] },
+      { label: "Morocco domestic", ids: ["morocco"] },
+      { label: "Europe", ids: ["spain", "portugal", "poland", "czechia", "hungary", "slovakia", "romania", "lithuania", "slovenia", "croatia", "latvia"] },
+      { label: "LATAM", ids: ["colombia", "panama", "ecuador"] },
+    ],
+    codpartner: [{ label: "GCC & Iraq", ids: ["uae", "ksa", "kuwait", "qatar", "oman", "bahrain", "iraq"] }],
+    "local-seller": [{ label: "Fixed market", ids: ["morocco"] }],
+    "local-drop": [{ label: "Fixed market", ids: ["morocco"] }],
+  };
+
+  const PLATFORM_META = {
+    codnetwork: { name: "COD Network", source: "Fees loaded from the supplied COD Network dashboard." },
+    codpartner: { name: "COD Partner", source: "Fees loaded from the supplied COD Partner pricing PDF." },
+    "local-seller": { name: "Seller", source: "Seller fees for Morocco." },
+    "local-drop": { name: "Space Seller", source: "Space Seller fees for Morocco." },
+  };
+
+  const confirmationScenarios = [35, 40, 45, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 62, 64, 66, 70, 75, 90, 100];
+  const deliveryScenarios = [25, 30, 32, 35, 38, 40, 42, 44, 45, 47, 48, 49, 50, 52, 54, 55, 56, 57, 58, 59, 60, 65, 70, 75, 80, 100];
+
+  const $ = (id) => document.getElementById(id);
+  const platformSelect = $("platform");
+  const countrySelect = $("country");
+  const productTypeSelect = $("productType");
+  const serviceModeSelect = $("serviceMode");
+  const inputs = {
+    leads: $("leads"),
+    costPerLead: $("costPerLead"),
+    confirmation: $("confirmation"),
+    delivery: $("delivery"),
+    price: $("price"),
+    productCost: $("productCost"),
+    parcelWeight: $("parcelWeight"),
+  };
+  const leadsRange = $("leadsRange");
+  const confirmationRange = $("confirmationRange");
+  const deliveryRange = $("deliveryRange");
+  const matrixTable = $("matrixTable");
+
+  function market(name, flag, currency, returned, delivered, noCallCenter, vat, codRate = 0.05, fulfillment = 0) {
+    return { name, flag, currency, returned, delivered, noCallCenter, vat, codRate, fulfillment };
+  }
+
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const safeNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+  const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+  const count = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+  const displayCount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  const currencySymbol = (currency) => ({ USD: "$", EUR: "€", MAD: "MAD", DH: "dh" }[currency] || currency);
+  const moneyFormatter = (currency) => new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const money = (value, currency) => currency === "DH" ? `${round2(value).toFixed(2)} dh` : moneyFormatter(currency).format(round2(value));
+  const setText = (id, value) => { $(id).textContent = value; };
+
+  function isLocalPlatform(platform = platformSelect.value) {
+    return platform === "local-seller" || platform === "local-drop";
+  }
+
+  function currentMarkets() {
+    if (isLocalPlatform()) return LOCAL_MARKETS;
+    return platformSelect.value === "codpartner" ? PARTNER_MARKETS : NETWORK_MARKETS;
+  }
+
+  function currentMarket() {
+    return currentMarkets()[countrySelect.value] || Object.values(currentMarkets())[0];
+  }
+
+  function updateCountryOptions(preferredCountry) {
+    const platform = platformSelect.value;
+    const markets = isLocalPlatform(platform) ? LOCAL_MARKETS : (platform === "codpartner" ? PARTNER_MARKETS : NETWORK_MARKETS);
+    const keep = preferredCountry || countrySelect.value;
+    countrySelect.innerHTML = MARKET_GROUPS[platform].map((group) => {
+      const options = group.ids.map((id) => `<option value="${id}">${markets[id].flag} ${markets[id].name}</option>`).join("");
+      return `<optgroup label="${group.label}">${options}</optgroup>`;
+    }).join("");
+    countrySelect.value = markets[keep] ? keep : (isLocalPlatform(platform) ? "morocco" : "ksa");
+    countrySelect.disabled = isLocalPlatform(platform);
+  }
+
+  function updateServiceModes(preferredMode) {
+    const platform = platformSelect.value;
+    const marketData = currentMarket();
+    let options;
+    if (isLocalPlatform(platform)) {
+      setText("serviceModeLabel", "Service setup");
+      options = [{ value: "local", label: "Fixed local fees" }];
+    } else if (platform === "codpartner") {
+      setText("serviceModeLabel", "COD Partner plan");
+      options = [
+        { value: "free", label: "Free Plan" },
+        { value: "free-return", label: "Free Return Plan" },
+      ];
+    } else if (marketData.noCallCenter !== null) {
+      setText("serviceModeLabel", "Service setup");
+      options = [
+        { value: "with-center", label: "With call center" },
+        { value: "without-center", label: "Without call center" },
+      ];
+    } else {
+      setText("serviceModeLabel", "Service setup");
+      options = [{ value: "with-center", label: "Published tariff" }];
+    }
+    serviceModeSelect.innerHTML = options.map((option) => `<option value="${option.value}">${option.label}</option>`).join("");
+    serviceModeSelect.value = options.some((option) => option.value === preferredMode) ? preferredMode : options[0].value;
+  }
+
+  function readInputs() {
+    return {
+      platform: platformSelect.value,
+      country: countrySelect.value,
+      productType: productTypeSelect.value,
+      serviceMode: serviceModeSelect.value,
+      leads: Math.max(0, safeNumber(inputs.leads.value)),
+      costPerLead: Math.max(0, safeNumber(inputs.costPerLead.value)),
+      confirmation: clamp(safeNumber(inputs.confirmation.value), 0, 100),
+      delivery: clamp(safeNumber(inputs.delivery.value), 0, 100),
+      price: Math.max(0, safeNumber(inputs.price.value)),
+      productCost: Math.max(0, safeNumber(inputs.productCost.value)),
+      parcelWeight: Math.max(0, safeNumber(inputs.parcelWeight.value, 1)),
+    };
+  }
+
+  function getTariff(values) {
+    if (isLocalPlatform(values.platform)) {
+      const marketData = LOCAL_MARKETS.morocco;
+      return {
+        ...marketData,
+        kind: values.platform,
+        planName: values.platform === "local-seller" ? "Seller" : "Space Seller",
+        localFees: { ...LOCAL_FEES[values.platform] },
+      };
+    }
+    const marketData = (values.platform === "codpartner" ? PARTNER_MARKETS : NETWORK_MARKETS)[values.country];
+    let callCenter = marketData.callCenter?.[values.productType] || PRODUCT_FEES[values.productType];
+    let returned = marketData.returned;
+    let delivered = marketData.delivered;
+    let fulfillment = marketData.fulfillment || 0;
+    let planName = "With call center";
+    let extraWeight = 0;
+
+    if (values.platform === "codnetwork" && values.serviceMode === "without-center") {
+      callCenter = { lead: 0, confirmed: 0, delivered: 0 };
+      returned = marketData.noCallCenter;
+      delivered = marketData.noCallCenter;
+      fulfillment = 0;
+      planName = "Without call center";
+    }
+
+    if (values.platform === "codpartner") {
+      extraWeight = Math.max(0, values.parcelWeight - 5);
+      planName = values.serviceMode === "free-return" ? "Free Return Plan" : "Free Plan";
+      if (values.serviceMode === "free-return") {
+        returned = 0;
+        delivered = 7.99;
+        fulfillment = 1;
+      }
+      returned += extraWeight;
+      delivered += extraWeight;
+    }
+
+    return {
+      ...marketData,
+      callCenter,
+      returned,
+      delivered,
+      fulfillment,
+      planName,
+      extraWeight,
+      codLabel: marketData.codLabel || `${round2(marketData.codRate * 100)}%`,
+    };
+  }
+
+  function calculate(values, tariff, confirmationPercent = values.confirmation, deliveryPercent = values.delivery) {
+    const confirmed = values.leads * (confirmationPercent / 100);
+    const delivered = confirmed * (deliveryPercent / 100);
+    const sales = delivered * values.price;
+    let leadFee;
+    let confirmedFee;
+    let deliveredHandlingFee;
+    let shippingBaseFee;
+    let shippingUpliftFee;
+    let fulfillmentFee;
+    let codFee;
+
+    if (tariff.kind === "local-seller") {
+      leadFee = delivered * tariff.localFees.confirmationDelivered;
+      confirmedFee = delivered * tariff.localFees.shippingDelivered;
+      deliveredHandlingFee = confirmed * tariff.localFees.fulfillmentConfirmed;
+      shippingBaseFee = 0;
+      shippingUpliftFee = 0;
+      fulfillmentFee = 0;
+      codFee = 0;
+    } else if (tariff.kind === "local-drop") {
+      leadFee = values.leads * tariff.localFees.leadEntry;
+      confirmedFee = delivered * tariff.localFees.deliveredOrder;
+      deliveredHandlingFee = 0;
+      shippingBaseFee = 0;
+      shippingUpliftFee = 0;
+      fulfillmentFee = 0;
+      codFee = 0;
+    } else {
+      leadFee = values.leads * tariff.callCenter.lead;
+      confirmedFee = confirmed * tariff.callCenter.confirmed;
+      deliveredHandlingFee = delivered * tariff.callCenter.delivered;
+      shippingBaseFee = confirmed * tariff.returned;
+      shippingUpliftFee = delivered * (tariff.delivered - tariff.returned);
+      fulfillmentFee = delivered * tariff.fulfillment;
+      codFee = sales * tariff.codRate;
+    }
+    const serviceFees = leadFee + confirmedFee + deliveredHandlingFee + shippingBaseFee + shippingUpliftFee + fulfillmentFee + codFee;
+    const totalProduct = delivered * values.productCost;
+    const totalMarketing = values.leads * values.costPerLead;
+    const totalCharges = serviceFees + totalProduct + totalMarketing;
+    const netProfit = sales - totalCharges;
+    return {
+      confirmed,
+      delivered,
+      returned: Math.max(0, confirmed - delivered),
+      sales,
+      leadFee,
+      confirmedFee,
+      deliveredHandlingFee,
+      shippingBaseFee,
+      shippingUpliftFee,
+      fulfillmentFee,
+      codFee,
+      serviceFees,
+      codInvoice: sales - serviceFees,
+      totalProduct,
+      totalMarketing,
+      totalCharges,
+      netProfit,
+      marginPercent: sales ? (netProfit / sales) * 100 : 0,
+      profitPerDelivered: delivered ? netProfit / delivered : null,
+      maxCpl: values.leads ? (netProfit + totalMarketing) / values.leads : 0,
+    };
+  }
+
+  function formatProfit(value, currency) {
+    if (value === null || !Number.isFinite(value)) return "—";
+    return value < 0 ? `−${money(Math.abs(value), currency)}` : money(value, currency);
+  }
+
+  function renderMatrix(values, tariff) {
+    const head = `<thead><tr><th scope="col">Conf<br>Del</th>${confirmationScenarios.map((rate) => `<th scope="col" class="${rate === values.confirmation ? "selected-axis" : ""}">${rate}%</th>`).join("")}</tr></thead>`;
+    const body = deliveryScenarios.map((deliveryRate) => {
+      const cells = confirmationScenarios.map((confirmationRate) => {
+        const profit = calculate(values, tariff, confirmationRate, deliveryRate).profitPerDelivered ?? 0;
+        const level = profit < 0 ? "loss" : profit < 5 ? "gain-low" : profit < 15 ? "gain" : "gain-high";
+        const selected = confirmationRate === values.confirmation && deliveryRate === values.delivery;
+        const selectionLabel = `Use ${confirmationRate}% confirmation and ${deliveryRate}% delivery`;
+        return `<td class="${level} matrix-choice${selected ? " selected-cell" : ""}" data-confirmation="${confirmationRate}" data-delivery="${deliveryRate}" role="button" tabindex="0" aria-label="${selectionLabel}"${selected ? ' id="selectedScenarioCell" aria-current="true"' : ""}>${round2(profit).toFixed(2)}</td>`;
+      }).join("");
+      return `<tr><th scope="row" class="${deliveryRate === values.delivery ? "selected-axis" : ""}">${deliveryRate}%</th>${cells}</tr>`;
+    }).join("");
+    matrixTable.innerHTML = `${head}<tbody>${body}</tbody>`;
+  }
+
+  function renderTariffRibbon(values, tariff) {
+    const tileIds = ["tariffTileLead", "tariffTileConfirmed", "tariffTileDelivered", "tariffTileShipDelivered", "tariffTileShipReturned", "tariffTileCod", "tariffTileVat"];
+    const editHintIds = ["tariffLeadEdit", "tariffConfirmedEdit", "tariffDeliveredEdit"];
+    tileIds.forEach((id) => {
+      $(id).hidden = false;
+      $(id).disabled = true;
+      $(id).removeAttribute("title");
+    });
+    editHintIds.forEach((id) => { $(id).hidden = true; });
+    setText("tariffLeadLabel", "Lead");
+    setText("tariffConfirmedLabel", "Confirmed");
+    setText("tariffDeliveredLabel", "Delivered service");
+
+    if (values.platform === "local-seller") {
+      setText("tariffLeadLabel", "Confirmation · delivered");
+      setText("tariffLead", money(tariff.localFees.confirmationDelivered, tariff.currency));
+      setText("tariffConfirmedLabel", "Shipping · delivered");
+      setText("tariffConfirmed", money(tariff.localFees.shippingDelivered, tariff.currency));
+      setText("tariffDeliveredLabel", "Fulfillment · confirmed");
+      setText("tariffDelivered", money(tariff.localFees.fulfillmentConfirmed, tariff.currency));
+      ["tariffTileLead", "tariffTileConfirmed", "tariffTileDelivered"].forEach((id) => { $(id).disabled = false; });
+      editHintIds.forEach((id) => { $(id).hidden = false; });
+      $("tariffTileLead").title = "Edit confirmation fee";
+      $("tariffTileConfirmed").title = "Edit shipping fee";
+      $("tariffTileDelivered").title = "Edit fulfillment fee";
+      tileIds.slice(3).forEach((id) => { $(id).hidden = true; });
+      $("tariffTileLead").parentElement.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
+      return;
+    }
+
+    if (values.platform === "local-drop") {
+      setText("tariffLeadLabel", "Lead entry fee");
+      setText("tariffLead", money(tariff.localFees.leadEntry, tariff.currency));
+      setText("tariffConfirmedLabel", "Delivered order fee");
+      setText("tariffConfirmed", money(tariff.localFees.deliveredOrder, tariff.currency));
+      ["tariffTileLead", "tariffTileConfirmed"].forEach((id) => { $(id).disabled = false; });
+      ["tariffLeadEdit", "tariffConfirmedEdit"].forEach((id) => { $(id).hidden = false; });
+      $("tariffTileLead").title = "Edit lead entry fee";
+      $("tariffTileConfirmed").title = "Edit delivered order fee";
+      tileIds.slice(2).forEach((id) => { $(id).hidden = true; });
+      $("tariffTileLead").parentElement.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+      return;
+    }
+
+    $("tariffTileLead").parentElement.style.gridTemplateColumns = "repeat(7, minmax(0, 1fr))";
+    setText("tariffLead", tariff.callCenter.lead ? money(tariff.callCenter.lead, tariff.currency) : "Free");
+    setText("tariffConfirmed", tariff.callCenter.confirmed ? money(tariff.callCenter.confirmed, tariff.currency) : "Free");
+    setText("tariffDelivered", tariff.callCenter.delivered ? money(tariff.callCenter.delivered, tariff.currency) : "Free");
+    setText("tariffShipDelivered", money(tariff.delivered, tariff.currency));
+    setText("tariffShipReturned", money(tariff.returned, tariff.currency));
+    setText("tariffCod", tariff.codLabel);
+    setText("tariffVat", tariff.vat);
+  }
+
+  function renderBreakdown(values, tariff, result) {
+    const rowIds = ["leadFeeRow", "confirmedFeeRow", "deliveredFeeRow", "shippingBaseRow", "shippingUpliftRow", "fulfillmentRow", "codFeeRow"];
+    rowIds.forEach((id) => { $(id).hidden = false; });
+    setText("leadFeeLabel", "Lead service");
+    setText("confirmedFeeLabel", "Confirmation service");
+    setText("deliveredFeeLabel", "Delivered service");
+
+    if (values.platform === "local-seller") {
+      setText("leadFeeLabel", "Confirmation (per delivered)");
+      setText("leadRate", money(tariff.localFees.confirmationDelivered, tariff.currency));
+      setText("leadQty", count.format(result.delivered));
+      setText("leadFee", money(result.leadFee, tariff.currency));
+      setText("confirmedFeeLabel", "Shipping (per delivered)");
+      setText("confirmedRate", money(tariff.localFees.shippingDelivered, tariff.currency));
+      setText("confirmedQty", count.format(result.delivered));
+      setText("confirmedFee", money(result.confirmedFee, tariff.currency));
+      setText("deliveredFeeLabel", "Fulfillment (per confirmed)");
+      setText("deliveredRate", money(tariff.localFees.fulfillmentConfirmed, tariff.currency));
+      setText("deliveredQty", count.format(result.confirmed));
+      setText("deliveredHandlingFee", money(result.deliveredHandlingFee, tariff.currency));
+      rowIds.slice(3).forEach((id) => { $(id).hidden = true; });
+      return;
+    }
+
+    if (values.platform === "local-drop") {
+      setText("leadFeeLabel", "Lead entry fee");
+      setText("leadRate", money(tariff.localFees.leadEntry, tariff.currency));
+      setText("leadQty", count.format(values.leads));
+      setText("leadFee", money(result.leadFee, tariff.currency));
+      setText("confirmedFeeLabel", "Delivered order fee");
+      setText("confirmedRate", money(tariff.localFees.deliveredOrder, tariff.currency));
+      setText("confirmedQty", count.format(result.delivered));
+      setText("confirmedFee", money(result.confirmedFee, tariff.currency));
+      rowIds.slice(2).forEach((id) => { $(id).hidden = true; });
+      return;
+    }
+
+    setText("leadRate", tariff.callCenter.lead ? money(tariff.callCenter.lead, tariff.currency) : "Free");
+    setText("confirmedRate", tariff.callCenter.confirmed ? money(tariff.callCenter.confirmed, tariff.currency) : "Free");
+    setText("deliveredRate", tariff.callCenter.delivered ? money(tariff.callCenter.delivered, tariff.currency) : "Free");
+    setText("returnedShipRate", money(tariff.returned, tariff.currency));
+    setText("deliveredShipUpliftRate", money(tariff.delivered - tariff.returned, tariff.currency));
+    setText("fulfillmentRate", tariff.fulfillment ? money(tariff.fulfillment, tariff.currency) : "Free");
+    setText("codRate", tariff.codLabel);
+    setText("leadQty", count.format(values.leads));
+    setText("confirmedQty", count.format(result.confirmed));
+    setText("deliveredQty", count.format(result.delivered));
+    setText("shippingQty", count.format(result.confirmed));
+    setText("deliveredShipQty", count.format(result.delivered));
+    setText("fulfillmentQty", count.format(result.delivered));
+    setText("salesBase", money(result.sales, tariff.currency));
+    setText("leadFee", money(result.leadFee, tariff.currency));
+    setText("confirmedFee", money(result.confirmedFee, tariff.currency));
+    setText("deliveredHandlingFee", money(result.deliveredHandlingFee, tariff.currency));
+    setText("shippingBaseFee", money(result.shippingBaseFee, tariff.currency));
+    setText("shippingUpliftFee", money(result.shippingUpliftFee, tariff.currency));
+    setText("fulfillmentFee", money(result.fulfillmentFee, tariff.currency));
+    setText("codFee", money(result.codFee, tariff.currency));
+  }
+
+  function renderSource(values, tariff) {
+    const meta = PLATFORM_META[values.platform];
+    setText("sourceBadge", meta.name);
+    let note;
+    if (values.platform === "local-seller") {
+      note = "Morocco only: 10 dh confirmation and 38 dh shipping per delivered order, plus 1 dh fulfillment per confirmed order.";
+    } else if (values.platform === "local-drop") {
+      note = "Morocco only: 2 dh per lead and 63 dh per delivered order.";
+    } else {
+      note = values.platform === "codpartner"
+        ? `${tariff.planName}. PDF tariff; $1/kg is added above 5 kg. VAT was not listed, so it is not added.`
+        : `Published ${tariff.planName.toLowerCase()} tariff from the supplied dashboard.`;
+    }
+    if (tariff.notice) note = tariff.notice;
+    setText("sourceNote", note);
+    setText("footerSource", meta.source + (tariff.notice ? ` ${tariff.notice}` : ""));
+  }
+
+  function render() {
+    const values = readInputs();
+    const tariff = getTariff(values);
+    const result = calculate(values, tariff);
+    const symbol = currencySymbol(tariff.currency);
+    const localPlatform = isLocalPlatform(values.platform);
+
+    $("parcelWeightTile").hidden = values.platform !== "codpartner";
+    $("productTypeCard").hidden = localPlatform;
+    $("serviceModeCard").hidden = localPlatform;
+    $("setupBar").classList.toggle("is-local", localPlatform);
+    document.querySelectorAll(".currency-symbol").forEach((node) => { node.textContent = symbol; });
+    confirmationRange.value = values.confirmation;
+    deliveryRange.value = values.delivery;
+    if (values.leads > Number(leadsRange.max)) {
+      leadsRange.max = Math.ceil(values.leads / 1000) * 1000;
+      setText("leadsRangeMax", displayCount.format(Number(leadsRange.max)));
+    }
+    leadsRange.value = Math.min(values.leads, Number(leadsRange.max));
+
+    renderTariffRibbon(values, tariff);
+    setText("invoiceKicker", localPlatform
+      ? `${PLATFORM_META[values.platform].name} · ${tariff.flag} ${tariff.name}`
+      : `${PLATFORM_META[values.platform].name} · ${tariff.flag} ${tariff.name} · ${tariff.planName}`);
+    setText("currencyPill", tariff.currency === "DH" ? "dh" : tariff.currency);
+    renderSource(values, tariff);
+
+    setText("marginPercent", `${round2(result.marginPercent).toFixed(2)}%`);
+    setText("profitPerDelivered", formatProfit(result.profitPerDelivered, tariff.currency));
+    setText("maxCpl", formatProfit(result.maxCpl, tariff.currency));
+    setText("leadsSummary", displayCount.format(values.leads));
+    setText("confirmedSummary", displayCount.format(result.confirmed));
+    setText("deliveredSummary", displayCount.format(result.delivered));
+
+    renderBreakdown(values, tariff, result);
+    setText("serviceFees", money(result.serviceFees, tariff.currency));
+    setText("sales", money(result.sales, tariff.currency));
+    setText("codInvoice", money(result.codInvoice, tariff.currency));
+    setText("productMath", `${money(values.productCost, tariff.currency)} × ${count.format(result.delivered)}`);
+    setText("marketingMath", `${money(values.costPerLead, tariff.currency)} × ${count.format(values.leads)}`);
+    setText("totalProduct", money(result.totalProduct, tariff.currency));
+    setText("totalMarketing", money(result.totalMarketing, tariff.currency));
+    setText("totalCharges", money(result.totalCharges, tariff.currency));
+    setText("netProfit", formatProfit(result.netProfit, tariff.currency));
+    setText("matrixCurrent", formatProfit(result.profitPerDelivered, tariff.currency));
+    setText("matrixNote", `Click any number to load its rates. Current scenario: ${values.confirmation}% confirmation × ${values.delivery}% delivery.`);
+    $("profitCard").classList.toggle("is-loss", result.netProfit < 0);
+
+    renderMatrix(values, tariff);
+    return { inputs: values, tariff, results: result };
+  }
+
+  function setValues(next) {
+    if (next.platform && PLATFORM_META[next.platform]) {
+      platformSelect.value = next.platform;
+      updateCountryOptions(next.country);
+      updateServiceModes(next.serviceMode);
+    } else if (next.country) {
+      updateCountryOptions(next.country);
+      updateServiceModes(next.serviceMode || serviceModeSelect.value);
+    }
+    if (next.productType && PRODUCT_FEES[next.productType]) productTypeSelect.value = next.productType;
+    if (next.serviceMode && [...serviceModeSelect.options].some((option) => option.value === next.serviceMode)) serviceModeSelect.value = next.serviceMode;
+    for (const [key, input] of Object.entries(inputs)) {
+      if (!(key in next)) continue;
+      const value = safeNumber(next[key], DEFAULTS[key]);
+      input.value = (key === "confirmation" || key === "delivery") ? clamp(value, 0, 100) : Math.max(0, value);
+    }
+    return render();
+  }
+
+  platformSelect.addEventListener("change", () => {
+    updateCountryOptions(isLocalPlatform() ? "morocco" : "ksa");
+    updateServiceModes(isLocalPlatform() ? "local" : (platformSelect.value === "codpartner" ? "free" : "with-center"));
+    render();
+  });
+  countrySelect.addEventListener("change", () => { updateServiceModes(serviceModeSelect.value); render(); });
+  productTypeSelect.addEventListener("change", render);
+  serviceModeSelect.addEventListener("change", render);
+  inputs.costPerLead.addEventListener("input", render);
+  inputs.price.addEventListener("input", render);
+  inputs.productCost.addEventListener("input", render);
+  inputs.parcelWeight.addEventListener("input", render);
+  inputs.leads.addEventListener("input", render);
+  leadsRange.addEventListener("input", () => { inputs.leads.value = leadsRange.value; render(); });
+  inputs.confirmation.addEventListener("input", render);
+  inputs.delivery.addEventListener("input", render);
+  confirmationRange.addEventListener("input", () => { inputs.confirmation.value = confirmationRange.value; render(); });
+  deliveryRange.addEventListener("input", () => { inputs.delivery.value = deliveryRange.value; render(); });
+
+  const localFeeEditors = {
+    "local-seller": {
+      tariffTileLead: { key: "confirmationDelivered", label: "Confirmation fee per delivered order" },
+      tariffTileConfirmed: { key: "shippingDelivered", label: "Shipping fee per delivered order" },
+      tariffTileDelivered: { key: "fulfillmentConfirmed", label: "Fulfillment fee per confirmed order" },
+    },
+    "local-drop": {
+      tariffTileLead: { key: "leadEntry", label: "Lead entry fee" },
+      tariffTileConfirmed: { key: "deliveredOrder", label: "Delivered order fee" },
+    },
+  };
+
+  ["tariffTileLead", "tariffTileConfirmed", "tariffTileDelivered"].forEach((tileId) => {
+    $(tileId).addEventListener("click", () => {
+      const platform = platformSelect.value;
+      const editor = localFeeEditors[platform]?.[tileId];
+      if (!editor) return;
+      const currentValue = LOCAL_FEES[platform][editor.key];
+      const response = window.prompt(`${editor.label} (dh)`, String(currentValue));
+      if (response === null) return;
+      const nextValue = Number(String(response).trim().replace(",", "."));
+      if (!Number.isFinite(nextValue) || nextValue < 0) {
+        window.alert("Enter a valid fee of 0 dh or more.");
+        return;
+      }
+      LOCAL_FEES[platform][editor.key] = nextValue;
+      render();
+    });
+  });
+
+  $("resetButton").addEventListener("click", () => {
+    leadsRange.max = 5000;
+    setText("leadsRangeMax", "5,000");
+    Object.assign(LOCAL_FEES["local-seller"], LOCAL_FEE_DEFAULTS["local-seller"]);
+    Object.assign(LOCAL_FEES["local-drop"], LOCAL_FEE_DEFAULTS["local-drop"]);
+    platformSelect.value = DEFAULTS.platform;
+    updateCountryOptions(DEFAULTS.country);
+    updateServiceModes(DEFAULTS.serviceMode);
+    productTypeSelect.value = DEFAULTS.productType;
+    setValues(DEFAULTS);
+  });
+  $("focusCellButton").addEventListener("click", () => {
+    const selected = $("selectedScenarioCell");
+    if (selected) selected.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  });
+  function loadMatrixScenario(cell) {
+    const confirmation = safeNumber(cell.dataset.confirmation, DEFAULTS.confirmation);
+    const delivery = safeNumber(cell.dataset.delivery, DEFAULTS.delivery);
+    setValues({ confirmation, delivery });
+  }
+  matrixTable.addEventListener("click", (event) => {
+    const cell = event.target.closest("td.matrix-choice");
+    if (cell) loadMatrixScenario(cell);
+  });
+  matrixTable.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const cell = event.target.closest("td.matrix-choice");
+    if (!cell) return;
+    event.preventDefault();
+    loadMatrixScenario(cell);
+  });
+
+  function registerWebMcpTools() {
+    const context = document.modelContext;
+    if (!context?.registerTool) return;
+    const lifecycle = new AbortController();
+    const allowedKeys = new Set([...Object.keys(DEFAULTS)]);
+
+    Promise.resolve(context.registerTool({
+      name: "set_cod_simulator_inputs",
+      title: "Set COD simulator inputs",
+      description: "Update the visible platform, market, plan, product or campaign inputs and recalculate all results.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          platform: { type: "string", enum: ["codnetwork", "codpartner", "local-seller", "local-drop"] },
+          country: { type: "string" },
+          productType: { type: "string", enum: ["gadget", "cosmetic"] },
+          serviceMode: { type: "string" },
+          leads: { type: "number", minimum: 0 },
+          costPerLead: { type: "number", minimum: 0 },
+          confirmation: { type: "number", minimum: 0, maximum: 100 },
+          delivery: { type: "number", minimum: 0, maximum: 100 },
+          price: { type: "number", minimum: 0 },
+          productCost: { type: "number", minimum: 0 },
+          parcelWeight: { type: "number", minimum: 0 },
+        },
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: false, untrustedContentHint: false },
+      execute(payload) {
+        if (!payload || typeof payload !== "object" || Array.isArray(payload) || !Object.keys(payload).length) throw new Error("Provide at least one simulator input.");
+        for (const [key, value] of Object.entries(payload)) {
+          if (!allowedKeys.has(key)) throw new Error(`Unknown input: ${key}`);
+          if (["leads", "costPerLead", "confirmation", "delivery", "price", "productCost", "parcelWeight"].includes(key)) {
+            if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw new Error(`${key} must be a non-negative number.`);
+            if ((key === "confirmation" || key === "delivery") && value > 100) throw new Error(`${key} must be between 0 and 100.`);
+          }
+        }
+        const state = setValues(payload);
+        return summarize(state);
+      },
+    }, { signal: lifecycle.signal })).catch(() => {});
+
+    Promise.resolve(context.registerTool({
+      name: "read_cod_simulator_results",
+      title: "Read COD simulator results",
+      description: "Read the selected tariff, current campaign inputs and calculated profit results.",
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: true, untrustedContentHint: false },
+      execute() { return summarize(render()); },
+    }, { signal: lifecycle.signal })).catch(() => {});
+  }
+
+  function summarize(state) {
+    return {
+      inputs: state.inputs,
+      tariff: {
+        platform: PLATFORM_META[state.inputs.platform].name,
+        market: state.tariff.name,
+        currency: state.tariff.currency,
+        plan: state.tariff.planName,
+        leadFee: state.tariff.callCenter.lead,
+        confirmationFee: state.tariff.callCenter.confirmed,
+        deliveredServiceFee: state.tariff.callCenter.delivered,
+        returnedShipping: state.tariff.returned,
+        deliveredShipping: state.tariff.delivered,
+        fulfillment: state.tariff.fulfillment,
+        codRatePercent: state.tariff.codRate * 100,
+      },
+      results: {
+        confirmedOrders: round2(state.results.confirmed),
+        deliveredOrders: round2(state.results.delivered),
+        sales: round2(state.results.sales),
+        platformCharges: round2(state.results.serviceFees),
+        totalCharges: round2(state.results.totalCharges),
+        netProfit: round2(state.results.netProfit),
+        profitPerDelivered: state.results.profitPerDelivered === null ? null : round2(state.results.profitPerDelivered),
+        marginPercent: round2(state.results.marginPercent),
+        breakEvenCostPerLead: round2(state.results.maxCpl),
+      },
+    };
+  }
+
+  platformSelect.value = DEFAULTS.platform;
+  productTypeSelect.value = DEFAULTS.productType;
+  updateCountryOptions(DEFAULTS.country);
+  updateServiceModes(DEFAULTS.serviceMode);
+  render();
+  window.addEventListener("pageshow", () => {
+    if (!PLATFORM_META[platformSelect.value]) platformSelect.value = DEFAULTS.platform;
+    if (!PRODUCT_FEES[productTypeSelect.value]) productTypeSelect.value = DEFAULTS.productType;
+    const preservedCountry = currentMarkets()[countrySelect.value] ? countrySelect.value : DEFAULTS.country;
+    const preservedMode = serviceModeSelect.value || (isLocalPlatform() ? "local" : (platformSelect.value === "codpartner" ? "free" : "with-center"));
+    updateCountryOptions(preservedCountry);
+    updateServiceModes(preservedMode);
+    render();
+  });
+  registerWebMcpTools();
+})();
+    </script>
   </body>
 </html>

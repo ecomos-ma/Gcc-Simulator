@@ -62,6 +62,32 @@
     iraq: market("Iraq", "🇮🇶", "USD", 4.99, 4.99, null, "Not listed"),
   };
 
+  const LOCAL_MARKETS = {
+    morocco: {
+      name: "Morocco",
+      flag: "🇲🇦",
+      currency: "DH",
+      returned: 0,
+      delivered: 0,
+      noCallCenter: null,
+      vat: "0%",
+      codRate: 0,
+      fulfillment: 0,
+      callCenter: { lead: 0, confirmed: 0, delivered: 0 },
+      codLabel: "None",
+    },
+  };
+
+  const LOCAL_FEE_DEFAULTS = {
+    "local-seller": { confirmationDelivered: 10, shippingDelivered: 38, fulfillmentConfirmed: 1 },
+    "local-drop": { leadEntry: 2, deliveredOrder: 63 },
+  };
+
+  const LOCAL_FEES = {
+    "local-seller": { ...LOCAL_FEE_DEFAULTS["local-seller"] },
+    "local-drop": { ...LOCAL_FEE_DEFAULTS["local-drop"] },
+  };
+
   const MARKET_GROUPS = {
     codnetwork: [
       { label: "GCC domestic", ids: ["ksa", "uae", "bahrain", "oman", "kuwait", "qatar"] },
@@ -70,11 +96,15 @@
       { label: "LATAM", ids: ["colombia", "panama", "ecuador"] },
     ],
     codpartner: [{ label: "GCC & Iraq", ids: ["uae", "ksa", "kuwait", "qatar", "oman", "bahrain", "iraq"] }],
+    "local-seller": [{ label: "Fixed market", ids: ["morocco"] }],
+    "local-drop": [{ label: "Fixed market", ids: ["morocco"] }],
   };
 
   const PLATFORM_META = {
     codnetwork: { name: "COD Network", source: "Fees loaded from the supplied COD Network dashboard." },
     codpartner: { name: "COD Partner", source: "Fees loaded from the supplied COD Partner pricing PDF." },
+    "local-seller": { name: "Seller", source: "Seller fees for Morocco." },
+    "local-drop": { name: "Space Seller", source: "Space Seller fees for Morocco." },
   };
 
   const confirmationScenarios = [35, 40, 45, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 62, 64, 66, 70, 75, 90, 100];
@@ -108,12 +138,17 @@
   const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
   const count = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
   const displayCount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-  const currencySymbol = (currency) => ({ USD: "$", EUR: "€", MAD: "MAD" }[currency] || currency);
+  const currencySymbol = (currency) => ({ USD: "$", EUR: "€", MAD: "MAD", DH: "dh" }[currency] || currency);
   const moneyFormatter = (currency) => new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const money = (value, currency) => moneyFormatter(currency).format(round2(value));
+  const money = (value, currency) => currency === "DH" ? `${round2(value).toFixed(2)} dh` : moneyFormatter(currency).format(round2(value));
   const setText = (id, value) => { $(id).textContent = value; };
 
+  function isLocalPlatform(platform = platformSelect.value) {
+    return platform === "local-seller" || platform === "local-drop";
+  }
+
   function currentMarkets() {
+    if (isLocalPlatform()) return LOCAL_MARKETS;
     return platformSelect.value === "codpartner" ? PARTNER_MARKETS : NETWORK_MARKETS;
   }
 
@@ -123,20 +158,24 @@
 
   function updateCountryOptions(preferredCountry) {
     const platform = platformSelect.value;
-    const markets = platform === "codpartner" ? PARTNER_MARKETS : NETWORK_MARKETS;
+    const markets = isLocalPlatform(platform) ? LOCAL_MARKETS : (platform === "codpartner" ? PARTNER_MARKETS : NETWORK_MARKETS);
     const keep = preferredCountry || countrySelect.value;
     countrySelect.innerHTML = MARKET_GROUPS[platform].map((group) => {
       const options = group.ids.map((id) => `<option value="${id}">${markets[id].flag} ${markets[id].name}</option>`).join("");
       return `<optgroup label="${group.label}">${options}</optgroup>`;
     }).join("");
-    countrySelect.value = markets[keep] ? keep : (platform === "codpartner" ? "ksa" : "ksa");
+    countrySelect.value = markets[keep] ? keep : (isLocalPlatform(platform) ? "morocco" : "ksa");
+    countrySelect.disabled = isLocalPlatform(platform);
   }
 
   function updateServiceModes(preferredMode) {
     const platform = platformSelect.value;
     const marketData = currentMarket();
     let options;
-    if (platform === "codpartner") {
+    if (isLocalPlatform(platform)) {
+      setText("serviceModeLabel", "Service setup");
+      options = [{ value: "local", label: "Fixed local fees" }];
+    } else if (platform === "codpartner") {
       setText("serviceModeLabel", "COD Partner plan");
       options = [
         { value: "free", label: "Free Plan" },
@@ -173,6 +212,15 @@
   }
 
   function getTariff(values) {
+    if (isLocalPlatform(values.platform)) {
+      const marketData = LOCAL_MARKETS.morocco;
+      return {
+        ...marketData,
+        kind: values.platform,
+        planName: values.platform === "local-seller" ? "Seller" : "Space Seller",
+        localFees: { ...LOCAL_FEES[values.platform] },
+      };
+    }
     const marketData = (values.platform === "codpartner" ? PARTNER_MARKETS : NETWORK_MARKETS)[values.country];
     let callCenter = marketData.callCenter?.[values.productType] || PRODUCT_FEES[values.productType];
     let returned = marketData.returned;
@@ -217,13 +265,39 @@
     const confirmed = values.leads * (confirmationPercent / 100);
     const delivered = confirmed * (deliveryPercent / 100);
     const sales = delivered * values.price;
-    const leadFee = values.leads * tariff.callCenter.lead;
-    const confirmedFee = confirmed * tariff.callCenter.confirmed;
-    const deliveredHandlingFee = delivered * tariff.callCenter.delivered;
-    const shippingBaseFee = confirmed * tariff.returned;
-    const shippingUpliftFee = delivered * (tariff.delivered - tariff.returned);
-    const fulfillmentFee = delivered * tariff.fulfillment;
-    const codFee = sales * tariff.codRate;
+    let leadFee;
+    let confirmedFee;
+    let deliveredHandlingFee;
+    let shippingBaseFee;
+    let shippingUpliftFee;
+    let fulfillmentFee;
+    let codFee;
+
+    if (tariff.kind === "local-seller") {
+      leadFee = delivered * tariff.localFees.confirmationDelivered;
+      confirmedFee = delivered * tariff.localFees.shippingDelivered;
+      deliveredHandlingFee = confirmed * tariff.localFees.fulfillmentConfirmed;
+      shippingBaseFee = 0;
+      shippingUpliftFee = 0;
+      fulfillmentFee = 0;
+      codFee = 0;
+    } else if (tariff.kind === "local-drop") {
+      leadFee = values.leads * tariff.localFees.leadEntry;
+      confirmedFee = delivered * tariff.localFees.deliveredOrder;
+      deliveredHandlingFee = 0;
+      shippingBaseFee = 0;
+      shippingUpliftFee = 0;
+      fulfillmentFee = 0;
+      codFee = 0;
+    } else {
+      leadFee = values.leads * tariff.callCenter.lead;
+      confirmedFee = confirmed * tariff.callCenter.confirmed;
+      deliveredHandlingFee = delivered * tariff.callCenter.delivered;
+      shippingBaseFee = confirmed * tariff.returned;
+      shippingUpliftFee = delivered * (tariff.delivered - tariff.returned);
+      fulfillmentFee = delivered * tariff.fulfillment;
+      codFee = sales * tariff.codRate;
+    }
     const serviceFees = leadFee + confirmedFee + deliveredHandlingFee + shippingBaseFee + shippingUpliftFee + fulfillmentFee + codFee;
     const totalProduct = delivered * values.productCost;
     const totalMarketing = values.leads * values.costPerLead;
@@ -273,12 +347,133 @@
     matrixTable.innerHTML = `${head}<tbody>${body}</tbody>`;
   }
 
+  function renderTariffRibbon(values, tariff) {
+    const tileIds = ["tariffTileLead", "tariffTileConfirmed", "tariffTileDelivered", "tariffTileShipDelivered", "tariffTileShipReturned", "tariffTileCod", "tariffTileVat"];
+    const editHintIds = ["tariffLeadEdit", "tariffConfirmedEdit", "tariffDeliveredEdit"];
+    tileIds.forEach((id) => {
+      $(id).hidden = false;
+      $(id).disabled = true;
+      $(id).removeAttribute("title");
+    });
+    editHintIds.forEach((id) => { $(id).hidden = true; });
+    setText("tariffLeadLabel", "Lead");
+    setText("tariffConfirmedLabel", "Confirmed");
+    setText("tariffDeliveredLabel", "Delivered service");
+
+    if (values.platform === "local-seller") {
+      setText("tariffLeadLabel", "Confirmation · delivered");
+      setText("tariffLead", money(tariff.localFees.confirmationDelivered, tariff.currency));
+      setText("tariffConfirmedLabel", "Shipping · delivered");
+      setText("tariffConfirmed", money(tariff.localFees.shippingDelivered, tariff.currency));
+      setText("tariffDeliveredLabel", "Fulfillment · confirmed");
+      setText("tariffDelivered", money(tariff.localFees.fulfillmentConfirmed, tariff.currency));
+      ["tariffTileLead", "tariffTileConfirmed", "tariffTileDelivered"].forEach((id) => { $(id).disabled = false; });
+      editHintIds.forEach((id) => { $(id).hidden = false; });
+      $("tariffTileLead").title = "Edit confirmation fee";
+      $("tariffTileConfirmed").title = "Edit shipping fee";
+      $("tariffTileDelivered").title = "Edit fulfillment fee";
+      tileIds.slice(3).forEach((id) => { $(id).hidden = true; });
+      $("tariffTileLead").parentElement.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
+      return;
+    }
+
+    if (values.platform === "local-drop") {
+      setText("tariffLeadLabel", "Lead entry fee");
+      setText("tariffLead", money(tariff.localFees.leadEntry, tariff.currency));
+      setText("tariffConfirmedLabel", "Delivered order fee");
+      setText("tariffConfirmed", money(tariff.localFees.deliveredOrder, tariff.currency));
+      ["tariffTileLead", "tariffTileConfirmed"].forEach((id) => { $(id).disabled = false; });
+      ["tariffLeadEdit", "tariffConfirmedEdit"].forEach((id) => { $(id).hidden = false; });
+      $("tariffTileLead").title = "Edit lead entry fee";
+      $("tariffTileConfirmed").title = "Edit delivered order fee";
+      tileIds.slice(2).forEach((id) => { $(id).hidden = true; });
+      $("tariffTileLead").parentElement.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+      return;
+    }
+
+    $("tariffTileLead").parentElement.style.gridTemplateColumns = "repeat(7, minmax(0, 1fr))";
+    setText("tariffLead", tariff.callCenter.lead ? money(tariff.callCenter.lead, tariff.currency) : "Free");
+    setText("tariffConfirmed", tariff.callCenter.confirmed ? money(tariff.callCenter.confirmed, tariff.currency) : "Free");
+    setText("tariffDelivered", tariff.callCenter.delivered ? money(tariff.callCenter.delivered, tariff.currency) : "Free");
+    setText("tariffShipDelivered", money(tariff.delivered, tariff.currency));
+    setText("tariffShipReturned", money(tariff.returned, tariff.currency));
+    setText("tariffCod", tariff.codLabel);
+    setText("tariffVat", tariff.vat);
+  }
+
+  function renderBreakdown(values, tariff, result) {
+    const rowIds = ["leadFeeRow", "confirmedFeeRow", "deliveredFeeRow", "shippingBaseRow", "shippingUpliftRow", "fulfillmentRow", "codFeeRow"];
+    rowIds.forEach((id) => { $(id).hidden = false; });
+    setText("leadFeeLabel", "Lead service");
+    setText("confirmedFeeLabel", "Confirmation service");
+    setText("deliveredFeeLabel", "Delivered service");
+
+    if (values.platform === "local-seller") {
+      setText("leadFeeLabel", "Confirmation (per delivered)");
+      setText("leadRate", money(tariff.localFees.confirmationDelivered, tariff.currency));
+      setText("leadQty", count.format(result.delivered));
+      setText("leadFee", money(result.leadFee, tariff.currency));
+      setText("confirmedFeeLabel", "Shipping (per delivered)");
+      setText("confirmedRate", money(tariff.localFees.shippingDelivered, tariff.currency));
+      setText("confirmedQty", count.format(result.delivered));
+      setText("confirmedFee", money(result.confirmedFee, tariff.currency));
+      setText("deliveredFeeLabel", "Fulfillment (per confirmed)");
+      setText("deliveredRate", money(tariff.localFees.fulfillmentConfirmed, tariff.currency));
+      setText("deliveredQty", count.format(result.confirmed));
+      setText("deliveredHandlingFee", money(result.deliveredHandlingFee, tariff.currency));
+      rowIds.slice(3).forEach((id) => { $(id).hidden = true; });
+      return;
+    }
+
+    if (values.platform === "local-drop") {
+      setText("leadFeeLabel", "Lead entry fee");
+      setText("leadRate", money(tariff.localFees.leadEntry, tariff.currency));
+      setText("leadQty", count.format(values.leads));
+      setText("leadFee", money(result.leadFee, tariff.currency));
+      setText("confirmedFeeLabel", "Delivered order fee");
+      setText("confirmedRate", money(tariff.localFees.deliveredOrder, tariff.currency));
+      setText("confirmedQty", count.format(result.delivered));
+      setText("confirmedFee", money(result.confirmedFee, tariff.currency));
+      rowIds.slice(2).forEach((id) => { $(id).hidden = true; });
+      return;
+    }
+
+    setText("leadRate", tariff.callCenter.lead ? money(tariff.callCenter.lead, tariff.currency) : "Free");
+    setText("confirmedRate", tariff.callCenter.confirmed ? money(tariff.callCenter.confirmed, tariff.currency) : "Free");
+    setText("deliveredRate", tariff.callCenter.delivered ? money(tariff.callCenter.delivered, tariff.currency) : "Free");
+    setText("returnedShipRate", money(tariff.returned, tariff.currency));
+    setText("deliveredShipUpliftRate", money(tariff.delivered - tariff.returned, tariff.currency));
+    setText("fulfillmentRate", tariff.fulfillment ? money(tariff.fulfillment, tariff.currency) : "Free");
+    setText("codRate", tariff.codLabel);
+    setText("leadQty", count.format(values.leads));
+    setText("confirmedQty", count.format(result.confirmed));
+    setText("deliveredQty", count.format(result.delivered));
+    setText("shippingQty", count.format(result.confirmed));
+    setText("deliveredShipQty", count.format(result.delivered));
+    setText("fulfillmentQty", count.format(result.delivered));
+    setText("salesBase", money(result.sales, tariff.currency));
+    setText("leadFee", money(result.leadFee, tariff.currency));
+    setText("confirmedFee", money(result.confirmedFee, tariff.currency));
+    setText("deliveredHandlingFee", money(result.deliveredHandlingFee, tariff.currency));
+    setText("shippingBaseFee", money(result.shippingBaseFee, tariff.currency));
+    setText("shippingUpliftFee", money(result.shippingUpliftFee, tariff.currency));
+    setText("fulfillmentFee", money(result.fulfillmentFee, tariff.currency));
+    setText("codFee", money(result.codFee, tariff.currency));
+  }
+
   function renderSource(values, tariff) {
     const meta = PLATFORM_META[values.platform];
     setText("sourceBadge", meta.name);
-    let note = values.platform === "codpartner"
-      ? `${tariff.planName}. PDF tariff; $1/kg is added above 5 kg. VAT was not listed, so it is not added.`
-      : `Published ${tariff.planName.toLowerCase()} tariff from the supplied dashboard.`;
+    let note;
+    if (values.platform === "local-seller") {
+      note = "Morocco only: 10 dh confirmation and 38 dh shipping per delivered order, plus 1 dh fulfillment per confirmed order.";
+    } else if (values.platform === "local-drop") {
+      note = "Morocco only: 2 dh per lead and 63 dh per delivered order.";
+    } else {
+      note = values.platform === "codpartner"
+        ? `${tariff.planName}. PDF tariff; $1/kg is added above 5 kg. VAT was not listed, so it is not added.`
+        : `Published ${tariff.planName.toLowerCase()} tariff from the supplied dashboard.`;
+    }
     if (tariff.notice) note = tariff.notice;
     setText("sourceNote", note);
     setText("footerSource", meta.source + (tariff.notice ? ` ${tariff.notice}` : ""));
@@ -289,8 +484,12 @@
     const tariff = getTariff(values);
     const result = calculate(values, tariff);
     const symbol = currencySymbol(tariff.currency);
+    const localPlatform = isLocalPlatform(values.platform);
 
     $("parcelWeightTile").hidden = values.platform !== "codpartner";
+    $("productTypeCard").hidden = localPlatform;
+    $("serviceModeCard").hidden = localPlatform;
+    $("setupBar").classList.toggle("is-local", localPlatform);
     document.querySelectorAll(".currency-symbol").forEach((node) => { node.textContent = symbol; });
     confirmationRange.value = values.confirmation;
     deliveryRange.value = values.delivery;
@@ -300,15 +499,11 @@
     }
     leadsRange.value = Math.min(values.leads, Number(leadsRange.max));
 
-    setText("tariffLead", tariff.callCenter.lead ? money(tariff.callCenter.lead, tariff.currency) : "Free");
-    setText("tariffConfirmed", tariff.callCenter.confirmed ? money(tariff.callCenter.confirmed, tariff.currency) : "Free");
-    setText("tariffDelivered", tariff.callCenter.delivered ? money(tariff.callCenter.delivered, tariff.currency) : "Free");
-    setText("tariffShipDelivered", money(tariff.delivered, tariff.currency));
-    setText("tariffShipReturned", money(tariff.returned, tariff.currency));
-    setText("tariffCod", tariff.codLabel);
-    setText("tariffVat", tariff.vat);
-    setText("invoiceKicker", `${PLATFORM_META[values.platform].name} · ${tariff.flag} ${tariff.name} · ${tariff.planName}`);
-    setText("currencyPill", tariff.currency);
+    renderTariffRibbon(values, tariff);
+    setText("invoiceKicker", localPlatform
+      ? `${PLATFORM_META[values.platform].name} · ${tariff.flag} ${tariff.name}`
+      : `${PLATFORM_META[values.platform].name} · ${tariff.flag} ${tariff.name} · ${tariff.planName}`);
+    setText("currencyPill", tariff.currency === "DH" ? "dh" : tariff.currency);
     renderSource(values, tariff);
 
     setText("marginPercent", `${round2(result.marginPercent).toFixed(2)}%`);
@@ -318,29 +513,7 @@
     setText("confirmedSummary", displayCount.format(result.confirmed));
     setText("deliveredSummary", displayCount.format(result.delivered));
 
-    setText("leadRate", tariff.callCenter.lead ? money(tariff.callCenter.lead, tariff.currency) : "Free");
-    setText("confirmedRate", tariff.callCenter.confirmed ? money(tariff.callCenter.confirmed, tariff.currency) : "Free");
-    setText("deliveredRate", tariff.callCenter.delivered ? money(tariff.callCenter.delivered, tariff.currency) : "Free");
-    setText("returnedShipRate", money(tariff.returned, tariff.currency));
-    setText("deliveredShipUpliftRate", money(tariff.delivered - tariff.returned, tariff.currency));
-    setText("fulfillmentRate", tariff.fulfillment ? money(tariff.fulfillment, tariff.currency) : "Free");
-    setText("codRate", tariff.codLabel);
-
-    setText("leadQty", count.format(values.leads));
-    setText("confirmedQty", count.format(result.confirmed));
-    setText("deliveredQty", count.format(result.delivered));
-    setText("shippingQty", count.format(result.confirmed));
-    setText("deliveredShipQty", count.format(result.delivered));
-    setText("fulfillmentQty", count.format(result.delivered));
-    setText("salesBase", money(result.sales, tariff.currency));
-
-    setText("leadFee", money(result.leadFee, tariff.currency));
-    setText("confirmedFee", money(result.confirmedFee, tariff.currency));
-    setText("deliveredHandlingFee", money(result.deliveredHandlingFee, tariff.currency));
-    setText("shippingBaseFee", money(result.shippingBaseFee, tariff.currency));
-    setText("shippingUpliftFee", money(result.shippingUpliftFee, tariff.currency));
-    setText("fulfillmentFee", money(result.fulfillmentFee, tariff.currency));
-    setText("codFee", money(result.codFee, tariff.currency));
+    renderBreakdown(values, tariff, result);
     setText("serviceFees", money(result.serviceFees, tariff.currency));
     setText("sales", money(result.sales, tariff.currency));
     setText("codInvoice", money(result.codInvoice, tariff.currency));
@@ -378,8 +551,8 @@
   }
 
   platformSelect.addEventListener("change", () => {
-    updateCountryOptions(platformSelect.value === "codpartner" ? "ksa" : "ksa");
-    updateServiceModes(platformSelect.value === "codpartner" ? "free" : "with-center");
+    updateCountryOptions(isLocalPlatform() ? "morocco" : "ksa");
+    updateServiceModes(isLocalPlatform() ? "local" : (platformSelect.value === "codpartner" ? "free" : "with-center"));
     render();
   });
   countrySelect.addEventListener("change", () => { updateServiceModes(serviceModeSelect.value); render(); });
@@ -395,9 +568,42 @@
   inputs.delivery.addEventListener("input", render);
   confirmationRange.addEventListener("input", () => { inputs.confirmation.value = confirmationRange.value; render(); });
   deliveryRange.addEventListener("input", () => { inputs.delivery.value = deliveryRange.value; render(); });
+
+  const localFeeEditors = {
+    "local-seller": {
+      tariffTileLead: { key: "confirmationDelivered", label: "Confirmation fee per delivered order" },
+      tariffTileConfirmed: { key: "shippingDelivered", label: "Shipping fee per delivered order" },
+      tariffTileDelivered: { key: "fulfillmentConfirmed", label: "Fulfillment fee per confirmed order" },
+    },
+    "local-drop": {
+      tariffTileLead: { key: "leadEntry", label: "Lead entry fee" },
+      tariffTileConfirmed: { key: "deliveredOrder", label: "Delivered order fee" },
+    },
+  };
+
+  ["tariffTileLead", "tariffTileConfirmed", "tariffTileDelivered"].forEach((tileId) => {
+    $(tileId).addEventListener("click", () => {
+      const platform = platformSelect.value;
+      const editor = localFeeEditors[platform]?.[tileId];
+      if (!editor) return;
+      const currentValue = LOCAL_FEES[platform][editor.key];
+      const response = window.prompt(`${editor.label} (dh)`, String(currentValue));
+      if (response === null) return;
+      const nextValue = Number(String(response).trim().replace(",", "."));
+      if (!Number.isFinite(nextValue) || nextValue < 0) {
+        window.alert("Enter a valid fee of 0 dh or more.");
+        return;
+      }
+      LOCAL_FEES[platform][editor.key] = nextValue;
+      render();
+    });
+  });
+
   $("resetButton").addEventListener("click", () => {
     leadsRange.max = 5000;
     setText("leadsRangeMax", "5,000");
+    Object.assign(LOCAL_FEES["local-seller"], LOCAL_FEE_DEFAULTS["local-seller"]);
+    Object.assign(LOCAL_FEES["local-drop"], LOCAL_FEE_DEFAULTS["local-drop"]);
     platformSelect.value = DEFAULTS.platform;
     updateCountryOptions(DEFAULTS.country);
     updateServiceModes(DEFAULTS.serviceMode);
@@ -438,7 +644,7 @@
       inputSchema: {
         type: "object",
         properties: {
-          platform: { type: "string", enum: ["codnetwork", "codpartner"] },
+          platform: { type: "string", enum: ["codnetwork", "codpartner", "local-seller", "local-drop"] },
           country: { type: "string" },
           productType: { type: "string", enum: ["gadget", "cosmetic"] },
           serviceMode: { type: "string" },
@@ -516,7 +722,7 @@
     if (!PLATFORM_META[platformSelect.value]) platformSelect.value = DEFAULTS.platform;
     if (!PRODUCT_FEES[productTypeSelect.value]) productTypeSelect.value = DEFAULTS.productType;
     const preservedCountry = currentMarkets()[countrySelect.value] ? countrySelect.value : DEFAULTS.country;
-    const preservedMode = serviceModeSelect.value || (platformSelect.value === "codpartner" ? "free" : "with-center");
+    const preservedMode = serviceModeSelect.value || (isLocalPlatform() ? "local" : (platformSelect.value === "codpartner" ? "free" : "with-center"));
     updateCountryOptions(preservedCountry);
     updateServiceModes(preservedMode);
     render();
