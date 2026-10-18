@@ -268,6 +268,29 @@ label small { display: block; margin-top: 3px; color: var(--muted); font-size: .
 .profit-card strong { font: 780 clamp(1.6rem, 2.3vw, 2.2rem) var(--font-number); font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -.02em; }
 .profit-card.is-loss { border-color: #bd001c; background: linear-gradient(135deg, #ff7784, #ff273f); color: #35000a; }
 
+.insights-panel { margin-top: 12px; padding: 14px; border: 1px solid #9abbd2; border-radius: 11px; background: linear-gradient(145deg, #f7fbff, #edf5ff); }
+.insights-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.insights-heading h3 { margin: 0; font: 800 1.04rem var(--font-display); letter-spacing: -.015em; }
+.guidance-pill { padding: 5px 8px; border-radius: 999px; background: #e7dcff; color: #4c2abb; font-size: .68rem; font-weight: 850; letter-spacing: .055em; text-transform: uppercase; white-space: nowrap; }
+.insight-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 11px; }
+.insight-kpis article { min-width: 0; padding: 10px; border: 1px solid #b7cde7; border-radius: 9px; background: white; }
+.insight-kpis span, .insight-kpis small { display: block; color: var(--muted); font-size: .7rem; font-weight: 750; }
+.insight-kpis strong { display: block; margin: 3px 0 2px; color: var(--purple); font: 750 1rem var(--font-number); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.insight-kpis small { font-size: .64rem; font-weight: 600; }
+.improvement-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 13px; }
+.improvement-heading span { font-size: .82rem; font-weight: 850; }
+.improvement-heading small { color: var(--muted); font-size: .68rem; }
+.improvement-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 7px; }
+.improvement-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px 8px; min-width: 0; padding: 9px; border: 1px solid #b8cfe0; border-radius: 9px; background: white; }
+.improvement-card.is-best { border-color: #61bd67; background: #effff2; box-shadow: inset 0 3px 0 #39cb68; }
+.action-rank { grid-row: 1 / span 2; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; background: var(--ink); color: var(--lime); font: 800 .72rem var(--font-number); }
+.improvement-card div { min-width: 0; }
+.improvement-card div strong { display: block; overflow: hidden; font-size: .76rem; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
+.improvement-card div small { display: block; margin-top: 2px; color: var(--muted); font-size: .64rem; line-height: 1.3; }
+.improvement-card > b { grid-column: 2; color: #008948; font: 750 .83rem var(--font-number); font-variant-numeric: tabular-nums; }
+.improvement-card > b.is-negative { color: var(--red); }
+.insights-note { margin-top: 8px; color: var(--muted); font-size: .64rem; }
+
 .matrix-panel { margin-top: 14px; padding: 18px 14px 14px; border-top: 5px solid var(--purple); box-shadow: 0 18px 48px rgba(79,70,229,.12); }
 .matrix-header { padding: 0 4px; }
 .matrix-actions { display: flex; align-items: center; gap: 12px; }
@@ -345,6 +368,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, .matrix-scroll:
   .total-card strong { margin: 0; }
   .cost-block div { grid-template-columns: 1.25fr .82fr .72fr; gap: 4px; padding: 9px 7px; font-size: .74rem; }
   .matrix-header, .matrix-footer { align-items: flex-start; flex-direction: column; }
+  .insight-kpis { grid-template-columns: repeat(2, 1fr); }
+  .improvement-grid { grid-template-columns: 1fr; }
   .matrix-actions { width: 100%; justify-content: space-between; }
   .matrix-footer p { text-align: left; }
   footer { flex-direction: column; gap: 5px; padding: 2px 18px 20px; }
@@ -445,6 +470,22 @@ button:focus-visible, input:focus-visible, select:focus-visible, .matrix-scroll:
             <div><span>Total charges</span><small>Platform + product + ads</small><strong id="totalCharges">$904.88</strong></div>
           </div>
           <div class="profit-card" id="profitCard"><span><small>Bottom line</small>Net profit</span><strong id="netProfit">$152.63</strong></div>
+          <section class="insights-panel" aria-labelledby="insights-title">
+            <div class="insights-heading"><div><p class="section-kicker">Unit economics</p><h3 id="insights-title">Performance insights</h3></div><span class="guidance-pill">Live guidance</span></div>
+            <div class="insight-kpis">
+              <article><span>Ad cost / confirmed</span><strong id="adsPerConfirmed">$8.00</strong><small>Marketing ÷ confirmed</small></article>
+              <article><span>Ad cost / delivered</span><strong id="adsPerDelivered">$17.78</strong><small>Marketing ÷ delivered</small></article>
+              <article><span>Total cost / delivered</span><strong id="costPerDelivered">$40.22</strong><small>All charges ÷ delivered</small></article>
+              <article><span>Revenue / lead</span><strong id="revenuePerLead">$10.58</strong><small>COD sales ÷ leads</small></article>
+            </div>
+            <div class="improvement-heading"><span>Best ways to improve</span><small>Estimated net-profit change</small></div>
+            <div class="improvement-grid">
+              <article class="improvement-card is-best" id="improvementCard1"><span class="action-rank">1</span><div><strong id="improvementTitle1">Lower CPL</strong><small id="improvementDetail1">Reduce ad cost per lead by 10%</small></div><b id="improvementImpact1">+$40.00</b></article>
+              <article class="improvement-card" id="improvementCard2"><span class="action-rank">2</span><div><strong id="improvementTitle2">Raise delivery</strong><small id="improvementDetail2">Improve delivery by 5 points</small></div><b id="improvementImpact2">+$20.00</b></article>
+              <article class="improvement-card" id="improvementCard3"><span class="action-rank">3</span><div><strong id="improvementTitle3">Raise confirmation</strong><small id="improvementDetail3">Improve confirmation by 5 points</small></div><b id="improvementImpact3">+$10.00</b></article>
+            </div>
+            <p class="insights-note">Each estimate changes one input at a time and keeps the others fixed.</p>
+          </section>
         </section>
       </div>
 
@@ -941,6 +982,57 @@ button:focus-visible, input:focus-visible, select:focus-visible, .matrix-scroll:
     setText("footerSource", meta.source + (tariff.notice ? ` ${tariff.notice}` : ""));
   }
 
+  function renderInsights(values, tariff, result) {
+    const unitMoney = (value) => value === null || !Number.isFinite(value) ? "—" : money(value, tariff.currency);
+    setText("adsPerConfirmed", unitMoney(result.confirmed ? result.totalMarketing / result.confirmed : null));
+    setText("adsPerDelivered", unitMoney(result.delivered ? result.totalMarketing / result.delivered : null));
+    setText("costPerDelivered", unitMoney(result.delivered ? result.totalCharges / result.delivered : null));
+    setText("revenuePerLead", unitMoney(values.leads ? result.sales / values.leads : null));
+
+    const confirmationTarget = Math.min(100, values.confirmation + 5);
+    const deliveryTarget = Math.min(100, values.delivery + 5);
+    const lowerCpl = values.costPerLead * 0.9;
+    const higherPrice = values.price * 1.05;
+    const actions = [
+      {
+        title: `Lower CPL to ${money(lowerCpl, tariff.currency)}`,
+        detail: "Reduce ad cost per lead by 10%",
+        impact: calculate({ ...values, costPerLead: lowerCpl }, tariff).netProfit - result.netProfit,
+      },
+      {
+        title: `Raise price to ${money(higherPrice, tariff.currency)}`,
+        detail: "Test a 5% higher selling price",
+        impact: calculate({ ...values, price: higherPrice }, tariff).netProfit - result.netProfit,
+      },
+      {
+        title: confirmationTarget === values.confirmation ? "Confirmation is at 100%" : `Raise confirmation to ${count.format(confirmationTarget)}%`,
+        detail: confirmationTarget === values.confirmation ? "No higher scenario available" : "Improve confirmation by 5 points",
+        impact: calculate(values, tariff, confirmationTarget, values.delivery).netProfit - result.netProfit,
+        lever: "confirmation",
+      },
+      {
+        title: deliveryTarget === values.delivery ? "Delivery is at 100%" : `Raise delivery to ${count.format(deliveryTarget)}%`,
+        detail: deliveryTarget === values.delivery ? "No higher scenario available" : "Improve delivery by 5 points",
+        impact: calculate(values, tariff, values.confirmation, deliveryTarget).netProfit - result.netProfit,
+        lever: "delivery",
+      },
+    ].map((action) => {
+      if (action.impact < 0 && action.lever) {
+        return { ...action, title: `Hold ${action.lever} scaling`, detail: `Fix unit margin before adding more ${action.lever}` };
+      }
+      return action;
+    }).sort((a, b) => b.impact - a.impact).slice(0, 3);
+
+    actions.forEach((action, index) => {
+      const position = index + 1;
+      setText(`improvementTitle${position}`, action.title);
+      setText(`improvementDetail${position}`, action.detail);
+      setText(`improvementImpact${position}`, `${action.impact >= 0 ? "+" : "−"}${money(Math.abs(action.impact), tariff.currency)}`);
+      $(`improvementImpact${position}`).classList.toggle("is-negative", action.impact < 0);
+      $(`improvementCard${position}`).classList.toggle("is-best", index === 0);
+    });
+  }
+
   function render() {
     const values = readInputs();
     const tariff = getTariff(values);
@@ -974,6 +1066,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, .matrix-scroll:
     setText("leadsSummary", displayCount.format(values.leads));
     setText("confirmedSummary", displayCount.format(result.confirmed));
     setText("deliveredSummary", displayCount.format(result.delivered));
+    renderInsights(values, tariff, result);
 
     renderBreakdown(values, tariff, result);
     setText("serviceFees", money(result.serviceFees, tariff.currency));

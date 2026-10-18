@@ -479,6 +479,57 @@
     setText("footerSource", meta.source + (tariff.notice ? ` ${tariff.notice}` : ""));
   }
 
+  function renderInsights(values, tariff, result) {
+    const unitMoney = (value) => value === null || !Number.isFinite(value) ? "—" : money(value, tariff.currency);
+    setText("adsPerConfirmed", unitMoney(result.confirmed ? result.totalMarketing / result.confirmed : null));
+    setText("adsPerDelivered", unitMoney(result.delivered ? result.totalMarketing / result.delivered : null));
+    setText("costPerDelivered", unitMoney(result.delivered ? result.totalCharges / result.delivered : null));
+    setText("revenuePerLead", unitMoney(values.leads ? result.sales / values.leads : null));
+
+    const confirmationTarget = Math.min(100, values.confirmation + 5);
+    const deliveryTarget = Math.min(100, values.delivery + 5);
+    const lowerCpl = values.costPerLead * 0.9;
+    const higherPrice = values.price * 1.05;
+    const actions = [
+      {
+        title: `Lower CPL to ${money(lowerCpl, tariff.currency)}`,
+        detail: "Reduce ad cost per lead by 10%",
+        impact: calculate({ ...values, costPerLead: lowerCpl }, tariff).netProfit - result.netProfit,
+      },
+      {
+        title: `Raise price to ${money(higherPrice, tariff.currency)}`,
+        detail: "Test a 5% higher selling price",
+        impact: calculate({ ...values, price: higherPrice }, tariff).netProfit - result.netProfit,
+      },
+      {
+        title: confirmationTarget === values.confirmation ? "Confirmation is at 100%" : `Raise confirmation to ${count.format(confirmationTarget)}%`,
+        detail: confirmationTarget === values.confirmation ? "No higher scenario available" : "Improve confirmation by 5 points",
+        impact: calculate(values, tariff, confirmationTarget, values.delivery).netProfit - result.netProfit,
+        lever: "confirmation",
+      },
+      {
+        title: deliveryTarget === values.delivery ? "Delivery is at 100%" : `Raise delivery to ${count.format(deliveryTarget)}%`,
+        detail: deliveryTarget === values.delivery ? "No higher scenario available" : "Improve delivery by 5 points",
+        impact: calculate(values, tariff, values.confirmation, deliveryTarget).netProfit - result.netProfit,
+        lever: "delivery",
+      },
+    ].map((action) => {
+      if (action.impact < 0 && action.lever) {
+        return { ...action, title: `Hold ${action.lever} scaling`, detail: `Fix unit margin before adding more ${action.lever}` };
+      }
+      return action;
+    }).sort((a, b) => b.impact - a.impact).slice(0, 3);
+
+    actions.forEach((action, index) => {
+      const position = index + 1;
+      setText(`improvementTitle${position}`, action.title);
+      setText(`improvementDetail${position}`, action.detail);
+      setText(`improvementImpact${position}`, `${action.impact >= 0 ? "+" : "−"}${money(Math.abs(action.impact), tariff.currency)}`);
+      $(`improvementImpact${position}`).classList.toggle("is-negative", action.impact < 0);
+      $(`improvementCard${position}`).classList.toggle("is-best", index === 0);
+    });
+  }
+
   function render() {
     const values = readInputs();
     const tariff = getTariff(values);
@@ -512,6 +563,7 @@
     setText("leadsSummary", displayCount.format(values.leads));
     setText("confirmedSummary", displayCount.format(result.confirmed));
     setText("deliveredSummary", displayCount.format(result.delivered));
+    renderInsights(values, tariff, result);
 
     renderBreakdown(values, tariff, result);
     setText("serviceFees", money(result.serviceFees, tariff.currency));
